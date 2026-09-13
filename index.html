@@ -10,16 +10,13 @@
 <script>
 (async()=>{
   try{
-    const [a,b]=await Promise.all([
-      fetch('./app-data-1.txt').then(r=>r.text()),
-      fetch('./app-data-2.txt').then(r=>r.text())
-    ]);
-    const bin=Uint8Array.from(atob(a+b),c=>c.charCodeAt(0));
+    const parts=await Promise.all([1,2,3,4].map(i=>fetch('./d'+i+'.txt').then(r=>r.text())));
+    const bin=Uint8Array.from(atob(parts.join('')),c=>c.charCodeAt(0));
     const stream=new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'));
     const text=await new Response(stream).text();
     document.open();document.write(text);document.close();
   }catch(e){
-    document.body.innerHTML='<p style="padding:24px;color:#e86a6a;font-family:system-ui">Load failed. Use Chrome, Safari, Firefox, or Edge.<br><small>'+e+'</small></p>';
+    document.body.innerHTML='<p style="padding:24px;color:#e86a6a;font-family:system-ui">Load failed. Try Chrome, Safari, Firefox, or Edge.<br><small>'+e+'</small></p>';
   }
 })();
 </script>
