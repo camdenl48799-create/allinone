@@ -1,0 +1,8 @@
+{
+  "appId": "com.allinone.app",
+  "appName": "ALLINONE",
+  "webDir": ".",
+  "server": {
+    "androidScheme": "https"
+  }
+}
