@@ -2,33 +2,33 @@
 
 **One AI. Every project.**
 
-Demo Mode AI assistant — no API keys. Dark & light mode.
+Interactive AI project workspace — Demo Mode, no API keys required.
 
-## Links
+## Live app
 
-| | URL |
-|--|--|
-| **Live website** | https://allinone-flickco.vercel.app |
-| **GitHub repo** | https://github.com/camdenl48799-create/allinone |
-| **Canva logo (edit)** | https://www.canva.com/d/JGvrsJC69xHHLnK |
-
-## Open the app
-
-1. **Online:** open the live website link above  
-2. **Offline:** download `index.html` from this repo and open it in your browser  
+https://allinone-flickco.vercel.app
 
 ## Features
 
-- Chat, projects, tasks, notes
-- School / Writing / Code helpers  
-- Dark mode & light mode toggle  
-- Everything stored in your browser only  
+- **Dashboard** — describe an idea → project plan + tasks
+- **Projects** — workspaces with Overview, AI, Tasks, Notes
+- **AI Assistant** — chat (Demo Mode until a backend is connected)
+- **School Help** — explain, study, quiz
+- **Writing** — improve drafts while keeping your voice
+- **Code Helper** — explain, debug, generate, improve
+- **Notes** — personal notes with search
+- **Settings** — dark / light theme, clear data
+
+All data is stored in your browser (localStorage).
 
 ## Branding
 
-Logo designed in **Canva** and connected to this project.  
-Edit the design anytime: https://www.canva.com/d/JGvrsJC69xHHLnK
+Canva logo: https://www.canva.com/d/JGvrsJC69xHHLnK
 
-## License
+## Security
 
-Use freely for personal projects.
+No API keys in the frontend. Real providers need a secure backend later.
+
+## Local use
+
+Open `index.html` in Chrome, Firefox, Safari, or Edge.
