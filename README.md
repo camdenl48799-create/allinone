@@ -2,24 +2,44 @@
 
 **One AI. Every project.**
 
-Single-file Demo Mode AI project assistant. No API keys required.
+Demo Mode AI project assistant — **no API keys required**.
 
-## Live site
+## Quick start (local)
 
-Open `index.html` or visit the deployed site (see Vercel / GitHub Pages).
+1. Use the single-file app `ALLINONE.html` (open in any browser).
+2. Everything runs offline in Demo Mode. Data stays in localStorage.
 
-## Features
+## What’s inside
 
-- Dashboard with idea → project plan
-- Projects with Overview, Plan, Tasks, Notes, Project AI
-- AI Assistant, School Help, Writing Helper, Code Helper
-- Dark / light theme
-- All data in browser localStorage
+| Area | Features |
+|------|----------|
+| Dashboard | Idea → auto project plan |
+| Projects | Overview, Plan, Tasks, Notes, Project AI |
+| Helpers | AI Assistant, School, Writing, Code |
+| Settings | Dark/light theme, clear data |
 
-## Demo Mode
+## Live website
 
-All AI replies are local placeholders. No keys, no backend, nothing leaves your browser for AI.
+- **GitHub:** https://github.com/camdenl48799-create/allinone
+- **Vercel:** https://allinone-flickco.vercel.app
 
-## Source
+To publish the full app:
 
-This repo hosts the standalone single-file version. Full multi-file React source available separately.
+1. Rename `ALLINONE.html` → `index.html`
+2. Push to this repo’s `main` branch, **or** drag-and-drop onto Vercel/Netlify
+3. For GitHub Pages: Settings → Pages → Deploy from `main` / root
+
+## Branding (Canva)
+
+Logo (editable in Canva):
+https://www.canva.com/d/JGvrsJC69xHHLnK
+
+## Security
+
+- No API keys in the frontend
+- Demo Mode only in the single-file build
+- Optional real AI providers need a separate backend (not in this file)
+
+## License
+
+Use freely for personal projects.
