@@ -1,0 +1,43 @@
+{
+  "name": "allinone",
+  "version": "0.2.0",
+  "private": true,
+  "description": "ALLINONE — One AI. Every project.",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start:desktop": "electron .",
+    "build:desktop": "electron-builder",
+    "build:mobile": "npx cap sync",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios"
+  },
+  "devDependencies": {
+    "electron": "^38.1.0",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3"
+  },
+  "build": {
+    "appId": "com.allinone.app",
+    "productName": "ALLINONE",
+    "files": [
+      "index.html",
+      "desktop/**/*",
+      "capacitor.config.json",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist/apps"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
