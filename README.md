@@ -2,43 +2,32 @@
 
 **One AI. Every project.**
 
-Demo Mode AI project assistant — **no API keys required**.
+Demo Mode AI assistant — no API keys. Dark & light mode.
 
-## Quick start (local)
+## Links
 
-1. Use the single-file app `ALLINONE.html` (open in any browser).
-2. Everything runs offline in Demo Mode. Data stays in localStorage.
+| | URL |
+|--|--|
+| **Live website** | https://allinone-flickco.vercel.app |
+| **GitHub repo** | https://github.com/camdenl48799-create/allinone |
+| **Canva logo (edit)** | https://www.canva.com/d/JGvrsJC69xHHLnK |
 
-## What’s inside
+## Open the app
 
-| Area | Features |
-|------|----------|
-| Dashboard | Idea → auto project plan |
-| Projects | Overview, Plan, Tasks, Notes, Project AI |
-| Helpers | AI Assistant, School, Writing, Code |
-| Settings | Dark/light theme, clear data |
+1. **Online:** open the live website link above  
+2. **Offline:** download `index.html` from this repo and open it in your browser  
 
-## Live website
+## Features
 
-- **GitHub:** https://github.com/camdenl48799-create/allinone
-- **Vercel:** https://allinone-flickco.vercel.app
+- Chat, projects, tasks, notes
+- School / Writing / Code helpers  
+- Dark mode & light mode toggle  
+- Everything stored in your browser only  
 
-To publish the full app:
+## Branding
 
-1. Rename `ALLINONE.html` → `index.html`
-2. Push to this repo’s `main` branch, **or** drag-and-drop onto Vercel/Netlify
-3. For GitHub Pages: Settings → Pages → Deploy from `main` / root
-
-## Branding (Canva)
-
-Logo (editable in Canva):
-https://www.canva.com/d/JGvrsJC69xHHLnK
-
-## Security
-
-- No API keys in the frontend
-- Demo Mode only in the single-file build
-- Optional real AI providers need a separate backend (not in this file)
+Logo designed in **Canva** and connected to this project.  
+Edit the design anytime: https://www.canva.com/d/JGvrsJC69xHHLnK
 
 ## License
 
