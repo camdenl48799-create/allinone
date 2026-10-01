@@ -48,10 +48,7 @@ public sealed class ClerkAuthService
 
         // Clerk's OAuth authorization screen handles the enabled social connections.
         // The optional provider value is reserved for a provider-specific flow when supported by the configured instance.
-        if (!string.IsNullOrWhiteSpace(provider))
-            query["provider"] = provider;
-
-        using var listener = new LocalCallbackListener(new Uri(redirectUri));
+                using var listener = new LocalCallbackListener(new Uri(redirectUri));
         var url = authorizeUrl + "?" + string.Join("&", query.Select(kvp =>
             $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
 
@@ -169,7 +166,7 @@ public sealed class ClerkAuthService
             var firstLine = request.Split("\r\n", StringSplitOptions.None).FirstOrDefault() ?? "";
             var target = firstLine.Split(' ', StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1) ?? "/";
             var callbackUri = new Uri(new Uri($"{redirectUri.Scheme}://{redirectUri.Authority}"), target);
-            var query = System.Web.HttpUtility.ParseQueryString(callbackUri.Query);
+            var query = ParseQuery(callbackUri.Query);
 
             const string html = "<html><body style='font-family:Segoe UI;text-align:center;padding:48px'><h2>ALLINONE authentication complete</h2><p>You can close this tab and return to ALLINONE.</p></body></html>";
             var response = $"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {Encoding.UTF8.GetByteCount(html)}\r\nConnection: close\r\n\r\n{html}";
@@ -179,10 +176,24 @@ public sealed class ClerkAuthService
 
             return new CallbackResult
             {
-                Code = query["code"],
-                State = query["state"],
-                Error = query["error"]
+                Code = query.TryGetValue("code", out var code) ? code : null,
+                State = query.TryGetValue("state", out var state) ? state : null,
+                Error = query.TryGetValue("error", out var error) ? error : null
             };
+        }
+
+        private static Dictionary<string, string> ParseQuery(string query)
+        {
+            var result = new Dictionary<string, string>(StringComparer.Ordinal);
+            var raw = query.TrimStart('?');
+            foreach (var part in raw.Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var pieces = part.Split('=', 2);
+                var key = Uri.UnescapeDataString(pieces[0].Replace("+", " "));
+                var value = pieces.Length == 2 ? Uri.UnescapeDataString(pieces[1].Replace("+", " ")) : "";
+                result[key] = value;
+            }
+            return result;
         }
 
         public void Dispose()
