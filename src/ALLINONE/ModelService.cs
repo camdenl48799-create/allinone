@@ -1,79 +1,106 @@
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
+using LLama;
+using LLama.Common;
+using LLama.Sampling;
+using LLama.Transformers;
 
 namespace ALLINONE;
 
-public sealed class ModelService
+public sealed class ModelService : IDisposable
 {
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(90) };
+    private readonly string modelPath;
+    private readonly SemaphoreSlim generationLock = new(1, 1);
+    private LLamaWeights? model;
+    private ChatSession? session;
 
-    public string ModelId { get; } =
-        Environment.GetEnvironmentVariable("ALLINONE_MODEL") ?? "gpt-5.6-luna";
+    public string ModelId => "ALLINONE Local AI";
+    public bool IsConfigured => File.Exists(modelPath);
+    public string ModelPath => modelPath;
 
-    public bool IsConfigured =>
-        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
+    public ModelService()
+    {
+        modelPath = Path.Combine(AppContext.BaseDirectory, "Models", "allinone.gguf");
+    }
 
-    public async Task<string> GenerateAsync(string prompt, string? context = null, string? role = null, CancellationToken cancellationToken = default)
+    public async Task<string> GenerateAsync(
+        string prompt,
+        string? context = null,
+        string? role = null,
+        CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
-            return "The ALLINONE model runtime is not configured yet. Set the OPENAI_API_KEY environment variable, then restart ALLINONE. No API key is stored in the app.";
-
-        var instructions = role switch
         {
-            "code" => "You are CodeInOne, the coding and software-building model inside ALLINONE. Give practical, correct code. Never claim a file was changed unless a tool actually changed it.",
-            "game" => "You are ALLINONE's game-building model. Help design games, gameplay systems, code, project structure, and safe creative assets.",
-            "research" => "You are SearchInOne's analysis model. Answer using the supplied web-search context. Distinguish source information from reasoning and say when the sources are insufficient.",
-            _ => "You are ALLINONE, a helpful general AI assistant. Be accurate, concise, and transparent about uncertainty."
+            return $"ALLINONE's local AI model is not installed yet. Place the model weights at:{Environment.NewLine}{modelPath}";
+        }
+
+        await generationLock.WaitAsync(cancellationToken);
+        try
+        {
+            EnsureLoaded();
+
+            var system = role switch
+            {
+                "code" => "You are CodeInOne, the coding intelligence inside ALLINONE. Write correct, practical code and be honest about what was actually changed.",
+                "game" => "You are ALLINONE's game-building intelligence. Help design games, gameplay systems, code, project structure, and safe creative features.",
+                "research" => "You are SearchInOne's research intelligence. Use the supplied web sources as evidence, distinguish facts from reasoning, and do not invent sources.",
+                _ => "You are ALLINONE, a helpful local AI assistant. Be accurate, concise, transparent, and useful."
+            };
+
+            var fullPrompt = string.IsNullOrWhiteSpace(context)
+                ? prompt
+                : $"{prompt}\n\nSearchInOne source context:\n{context}";
+
+            session!.ChatHistory.AddMessage(AuthorRole.System, system);
+
+            var inference = new InferenceParams
+            {
+                MaxTokens = 512,
+                SamplingPipeline = new DefaultSamplingPipeline
+                {
+                    Temperature = 0.6f
+                }
+            };
+
+            var result = new System.Text.StringBuilder();
+            await foreach (var token in session.ChatAsync(
+                new ChatHistory.Message(AuthorRole.User, fullPrompt),
+                inference,
+                cancellationToken))
+            {
+                result.Append(token);
+            }
+
+            var answer = result.ToString().Trim();
+            return string.IsNullOrWhiteSpace(answer)
+                ? "The local model returned no text."
+                : answer;
+        }
+        finally
+        {
+            generationLock.Release();
+        }
+    }
+
+    private void EnsureLoaded()
+    {
+        if (session is not null) return;
+
+        var parameters = new ModelParams(modelPath)
+        {
+            ContextSize = 2048,
+            GpuLayerCount = 0
         };
 
-        var input = string.IsNullOrWhiteSpace(context)
-            ? prompt
-            : $"User request:\n{prompt}\n\nSearchInOne context:\n{context}";
+        model = LLamaWeights.LoadFromFile(parameters);
+        var context = model.CreateContext(parameters);
+        var executor = new InteractiveExecutor(context);
 
-        var payload = new { model = ModelId, instructions, input, store = false };
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
-        request.Headers.UserAgent.ParseAdd("ALLINONE/0.5");
-        request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        session = new ChatSession(executor);
+        session.WithHistoryTransform(new PromptTemplateTransformer(model, withAssistant: true));
+    }
 
-        using var response = await Http.SendAsync(request, cancellationToken);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var message = "Unknown model error.";
-            try
-            {
-                using var error = JsonDocument.Parse(body);
-                if (error.RootElement.TryGetProperty("error", out var errorObject) &&
-                    errorObject.TryGetProperty("message", out var messageElement))
-                    message = messageElement.GetString() ?? message;
-            }
-            catch (JsonException) { }
-            throw new InvalidOperationException($"Model request failed ({(int)response.StatusCode}): {message}");
-        }
-
-        using var document = JsonDocument.Parse(body);
-        if (document.RootElement.TryGetProperty("output_text", out var outputText))
-        {
-            var text = outputText.GetString();
-            if (!string.IsNullOrWhiteSpace(text)) return text.Trim();
-        }
-
-        var collected = new StringBuilder();
-        if (document.RootElement.TryGetProperty("output", out var output) && output.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in output.EnumerateArray())
-            {
-                if (!item.TryGetProperty("content", out var parts) || parts.ValueKind != JsonValueKind.Array) continue;
-                foreach (var part in parts.EnumerateArray())
-                    if (part.TryGetProperty("text", out var textPart))
-                        collected.AppendLine(textPart.GetString());
-            }
-        }
-
-        var result = collected.ToString().Trim();
-        return string.IsNullOrWhiteSpace(result) ? "The model returned no text." : result;
+    public void Dispose()
+    {
+        generationLock.Dispose();
+        model?.Dispose();
     }
 }
