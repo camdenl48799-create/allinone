@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
+using System.Windows.Threading;\nusing System.Diagnostics;
 
 namespace ALLINONE;
 
@@ -83,7 +83,7 @@ public partial class MainWindow : Window
     {
         SetupView.Visibility = Visibility.Collapsed;
         AppView.Visibility = Visibility.Visible;
-        SettingsName.Text = settings.DisplayName;
+        SettingsName.Text = settings.DisplayName;\n        AuthStatus.Text = settings.SignedIn ? $"Signed in as {settings.AccountName ?? settings.DisplayName}" : "Not signed in";
         SettingsSafe.IsChecked = settings.SafeMode;
         AddMessage("ALLINONE", $"Ready, {settings.DisplayName}. What are we building?");
         SetOrbState("idle");
@@ -94,7 +94,7 @@ public partial class MainWindow : Window
         var tag = (sender as Button)?.Tag?.ToString();
         ChatPage.Visibility = tag == "Chat" ? Visibility.Visible : Visibility.Collapsed;
         ProjectsPage.Visibility = tag == "Projects" ? Visibility.Visible : Visibility.Collapsed;
-        SettingsPage.Visibility = tag == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        SettingsPage.Visibility = tag == "Settings" ? Visibility.Visible : Visibility.Collapsed;\n        AccountPage.Visibility = tag == "Account" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void Send_Click(object sender, RoutedEventArgs e) => SendPrompt();
@@ -207,7 +207,7 @@ public partial class MainWindow : Window
         Resources["MutedBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(light ? "#626976" : "#9BA3B2"));
     }
 
-    private void SaveSettings_Click(object sender, RoutedEventArgs e)
+    private void GoogleSignUp_Click(object sender, RoutedEventArgs e) => StartBrowserAuth("google", true);\n\n    private void AppleSignUp_Click(object sender, RoutedEventArgs e) => StartBrowserAuth("apple", true);\n\n    private void SignIn_Click(object sender, RoutedEventArgs e) => StartBrowserAuth("account", false);\n\n    private void StartBrowserAuth(string provider, bool signUp)\n    {\n        // Production OAuth endpoints will be configured when the ALLINONE auth service is connected.\n        // The native app intentionally opens the system browser rather than embedding a login page.\n        var endpoint = Environment.GetEnvironmentVariable($"ALLINONE_{provider.ToUpperInvariant()}_AUTH_URL");\n        if (string.IsNullOrWhiteSpace(endpoint))\n        {\n            AuthStatus.Text = "Authentication service not configured yet.";\n            return;\n        }\n        try { Process.Start(new ProcessStartInfo(endpoint) { UseShellExecute = true }); AuthStatus.Text = signUp ? $"Opening {provider} sign-up in your browser…" : "Opening sign-in in your browser…"; }\n        catch { AuthStatus.Text = "Could not open the authentication browser."; }\n    }\n\n    private void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
         settings.DisplayName = string.IsNullOrWhiteSpace(SettingsName.Text) ? "User" : SettingsName.Text.Trim();
         settings.SafeMode = SettingsSafe.IsChecked == true;
