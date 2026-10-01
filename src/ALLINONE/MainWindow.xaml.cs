@@ -17,7 +17,9 @@ public partial class MainWindow : Window
     private readonly ClerkAuthService clerk;
     private readonly UpdateService updater = new();
     private readonly SearchInOne searchInOne = new();
-    private readonly ModelService modelService = new();\n    private readonly ApiKeyService apiKeys;
+    private readonly ModelService modelService = new();
+    private readonly ApiKeyService apiKeys;
+    private readonly AllInOneApiServer apiServer;
     private Settings settings = new();
     private int setupStep = 1;
     private readonly DispatcherTimer orbTimer = new() { Interval = TimeSpan.FromMilliseconds(70) };
@@ -32,7 +34,10 @@ public partial class MainWindow : Window
         settingsPath = Path.Combine(dataDir, "settings.json");
         historyPath = Path.Combine(dataDir, "chat-history.json");
         Directory.CreateDirectory(dataDir);
-        clerk = new ClerkAuthService(dataDir);\n        apiKeys = new ApiKeyService(dataDir);
+        clerk = new ClerkAuthService(dataDir);
+        apiKeys = new ApiKeyService(dataDir);
+        apiServer = new AllInOneApiServer(apiKeys, modelService);
+        apiServer.Start();
         LoadSettings();
         ApplyTheme(settings.Theme);
         orbTimer.Tick += (_, _) => AnimateOrb();
@@ -82,7 +87,8 @@ public partial class MainWindow : Window
     private void ShowApp()
     {
         SetupView.Visibility = Visibility.Collapsed; AppView.Visibility = Visibility.Visible;
-        SettingsName.Text = settings.DisplayName; SettingsSafe.IsChecked = settings.SafeMode;\n        RenderApiKeys();
+        SettingsName.Text = settings.DisplayName; SettingsSafe.IsChecked = settings.SafeMode;
+        RenderApiKeys();
         AuthStatus.Text = settings.SignedIn ? $"Signed in as {settings.AccountName ?? settings.DisplayName}" : (clerk.IsConfigured ? "Not signed in" : "Clerk setup required");
         RestoreHistory();
         if (Messages.Children.Count == 0) AddMessage("ALLINONE", $"Ready, {settings.DisplayName}. What are we building?");
@@ -122,7 +128,8 @@ public partial class MainWindow : Window
         if (at < 0 || (at > 0 && !char.IsWhiteSpace(text[at - 1]))) { HideMentionPopup(); return; }
 
         var query = text[(at + 1)..caret];
-        if (query.Contains(' ') || query.Contains('\n')) { HideMentionPopup(); return; }
+        if (query.Contains(' ') || query.Contains('
+')) { HideMentionPopup(); return; }
 
         var options = new[] { "ALLINONE", "SearchInOne", "CodeInOne", "Project", "File", "Website", "YouTube", "Model" }
             .Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase))
@@ -141,7 +148,8 @@ public partial class MainWindow : Window
             {
                 Content = option switch
                 {
-                    "ALLINONE" => "✦  ALLINONE       Use your own ALLINONE AI",\n                    "SearchInOne" => "⌕  SearchInOne   Search the internet",
+                    "ALLINONE" => "✦  ALLINONE       Use your own ALLINONE AI",
+                    "SearchInOne" => "⌕  SearchInOne   Search the internet",
                     "CodeInOne" => "⌘  CodeInOne      Build and code",
                     "Project" => "◈  Project          Attach a project",
                     "File" => "▣  File                Attach a local file",
@@ -291,8 +299,10 @@ public partial class MainWindow : Window
         var results = await searchInOne.SearchAsync(query);
         if (results.Count == 0) return null;
 
-        return string.Join("\n", results.Select((r, i) =>
-            $"[{i + 1}] {r.Title}\nURL: {r.Url}"));
+        return string.Join("
+", results.Select((r, i) =>
+            $"[{i + 1}] {r.Title}
+URL: {r.Url}"));
     }
 
     private async Task CheckForUpdatesAsync()
@@ -407,7 +417,39 @@ public partial class MainWindow : Window
         catch (Exception ex) { AuthStatus.Text = $"Authentication failed: {ex.Message}"; }
     }
 
-\n    private void GenerateApiKey_Click(object sender, RoutedEventArgs e)\n    {\n        var name = string.IsNullOrWhiteSpace(ApiKeyNameBox.Text) ? "My ALLINONE key" : ApiKeyNameBox.Text.Trim();\n        var (_, secret) = apiKeys.Create(name);\n        ApiKeyResult.Text = $"API key created:\\n{secret}\\n\\nCopy it now. For security, ALLINONE will not show the secret again.";\n        RenderApiKeys();\n    }\n\n    private void RenderApiKeys()\n    {\n        if (ApiKeyList == null) return;\n        ApiKeyList.Children.Clear();\n        foreach (var key in apiKeys.Keys.OrderByDescending(k => k.CreatedAt))\n        {\n            var row = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };\n            var text = new TextBlock { Text = $"{key.Name}  •  {(key.Active ? "Active" : "Revoked")}  •  {key.CreatedAt.LocalDateTime:g}", VerticalAlignment = VerticalAlignment.Center, Foreground = (Brush)FindResource(key.Active ? "TextBrush" : "MutedBrush") };\n            DockPanel.SetDock(text, Dock.Left);\n            row.Children.Add(text);\n            if (key.Active)\n            {\n                var revoke = new Button { Content = "Revoke", Padding = new Thickness(9, 5), HorizontalAlignment = HorizontalAlignment.Right };\n                revoke.Click += (_, _) => { apiKeys.Revoke(key.Id); RenderApiKeys(); };\n                row.Children.Add(revoke);\n            }\n            ApiKeyList.Children.Add(row);\n        }\n    }\n\n    private void SignOut_Click(object sender, RoutedEventArgs e)
+
+    private void GenerateApiKey_Click(object sender, RoutedEventArgs e)
+    {
+        var name = string.IsNullOrWhiteSpace(ApiKeyNameBox.Text) ? "My ALLINONE key" : ApiKeyNameBox.Text.Trim();
+        var (_, secret) = apiKeys.Create(name);
+        ApiKeyResult.Text = $"API key created:\
+{secret}\
+\
+Copy it now. For security, ALLINONE will not show the secret again.";
+        RenderApiKeys();
+    }
+
+    private void RenderApiKeys()
+    {
+        if (ApiKeyList == null) return;
+        ApiKeyList.Children.Clear();
+        foreach (var key in apiKeys.Keys.OrderByDescending(k => k.CreatedAt))
+        {
+            var row = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+            var text = new TextBlock { Text = $"{key.Name}  •  {(key.Active ? "Active" : "Revoked")}  •  {key.CreatedAt.LocalDateTime:g}", VerticalAlignment = VerticalAlignment.Center, Foreground = (Brush)FindResource(key.Active ? "TextBrush" : "MutedBrush") };
+            DockPanel.SetDock(text, Dock.Left);
+            row.Children.Add(text);
+            if (key.Active)
+            {
+                var revoke = new Button { Content = "Revoke", Padding = new Thickness(9, 5), HorizontalAlignment = HorizontalAlignment.Right };
+                revoke.Click += (_, _) => { apiKeys.Revoke(key.Id); RenderApiKeys(); };
+                row.Children.Add(revoke);
+            }
+            ApiKeyList.Children.Add(row);
+        }
+    }
+
+    private void SignOut_Click(object sender, RoutedEventArgs e)
     {
         clerk.SignOut(); settings.SignedIn = false; settings.AccountName = null; SaveSettingsToDisk(); AuthStatus.Text = "Signed out";
     }
