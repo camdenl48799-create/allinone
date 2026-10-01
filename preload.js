@@ -1,2 +1,0 @@
-const { contextBridge, ipcRenderer } = require("electron");
-contextBridge.exposeInMainWorld("allinone",{getSettings:()=>ipcRenderer.invoke("settings:get"),saveSettings:v=>ipcRenderer.invoke("settings:save",v),getHistory:()=>ipcRenderer.invoke("history:get"),saveHistory:v=>ipcRenderer.invoke("history:save",v)});
