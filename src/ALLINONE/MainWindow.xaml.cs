@@ -86,7 +86,7 @@ public partial class MainWindow : Window
         AuthStatus.Text = settings.SignedIn ? $"Signed in as {settings.AccountName ?? settings.DisplayName}" : (clerk.IsConfigured ? "Not signed in" : "Clerk setup required");
         RestoreHistory();
         if (Messages.Children.Count == 0) AddMessage("ALLINONE", $"Ready, {settings.DisplayName}. What are we building?");
-        SetOrbState("idle"); StatusText.Text = modelService.IsConfigured ? $"● Model: {modelService.ModelId}" : "● Model needs API key";
+        SetOrbState("idle"); StatusText.Text = modelService.IsConfigured ? $"● {modelService.ModelId}" : "● Local AI model not installed";
     }
 
     private void Nav_Click(object sender, RoutedEventArgs e)
