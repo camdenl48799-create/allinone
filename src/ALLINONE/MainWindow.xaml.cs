@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using ALLINONE.Connectors;
 
 namespace ALLINONE;
 
@@ -20,6 +21,7 @@ public partial class MainWindow : Window
     private readonly ModelService modelService = new();
     private readonly ApiKeyService apiKeys;
     private readonly AllInOneApiServer apiServer;
+    private readonly CustomConnectorManager customConnectors;
     private Settings settings = new();
     private int setupStep = 1;
     private readonly DispatcherTimer orbTimer = new() { Interval = TimeSpan.FromMilliseconds(70) };
@@ -36,6 +38,7 @@ public partial class MainWindow : Window
         Directory.CreateDirectory(dataDir);
         clerk = new ClerkAuthService(dataDir);
         apiKeys = new ApiKeyService(dataDir);
+        customConnectors = new CustomConnectorManager(dataDir);
         apiServer = new AllInOneApiServer(apiKeys, modelService);
         apiServer.Start();
         LoadSettings();
@@ -130,7 +133,7 @@ public partial class MainWindow : Window
         var query = text[(at + 1)..caret];
         if (query.Contains(' ') || query.Contains('\n')) { HideMentionPopup(); return; }
 
-        var options = new[] { "ALLINONE", "SearchInOne", "CodeInOne", "Project", "File", "Website", "YouTube", "Model" }
+        var options = new[] { "ALLINONE", "SearchInOne", "CodeInOne", "Project", "File", "Website", "YouTube", "Model", "customconnector", "One-Api" }
             .Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase))
             .ToList();
         ShowMentionPopup(options);
@@ -154,6 +157,8 @@ public partial class MainWindow : Window
                     "File" => "▣  File                Attach a local file",
                     "Website" => "◉  Website         Research a website",
                     "YouTube" => "▶  YouTube        Search YouTube",
+                    "customconnector" => "🔌  customconnector  Connect external services",
+                    "One-Api" => "🔑  One-Api          Manage ALLINONE API keys",
                     _ => "✦  Model              Choose model"
                 },
                 HorizontalContentAlignment = HorizontalAlignment.Left,
@@ -186,6 +191,11 @@ public partial class MainWindow : Window
             searchMode = true;
             SearchButton.Content = "SearchInOne ON";
             StatusText.Text = "● SearchInOne ready";
+        }
+        else if (mention == "One-Api")
+        {
+            Nav_Click(new Button { Tag = "Account" }, new RoutedEventArgs());
+            StatusText.Text = "● ALLINONE API key management";
         }
     }
 
