@@ -422,10 +422,7 @@ URL: {r.Url}"));
     {
         var name = string.IsNullOrWhiteSpace(ApiKeyNameBox.Text) ? "My ALLINONE key" : ApiKeyNameBox.Text.Trim();
         var (_, secret) = apiKeys.Create(name);
-        ApiKeyResult.Text = $"API key created:\
-{secret}\
-\
-Copy it now. For security, ALLINONE will not show the secret again.";
+        ApiKeyResult.Text = $"API key created:\n{secret}\n\nCopy it now. For security, ALLINONE will not show the secret again.";
         RenderApiKeys();
     }
 
