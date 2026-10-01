@@ -215,9 +215,9 @@ public partial class MainWindow : Window
         gameMode = prompt.Contains("game", StringComparison.OrdinalIgnoreCase) || prompt.Contains("gameplay", StringComparison.OrdinalIgnoreCase) || prompt.Contains("video game", StringComparison.OrdinalIgnoreCase);
         SetOrbState(gameMode ? "game" : "thinking");
 
-        if (Regex.IsMatch(prompt, @"@customconnector\\b", RegexOptions.IgnoreCase))
+        if (Regex.IsMatch(prompt, @"@customconnector\b", RegexOptions.IgnoreCase))
         {
-            var command = Regex.Replace(prompt, @".*?@customconnector\\s*", "", RegexOptions.IgnoreCase).Trim();
+            var command = Regex.Replace(prompt, @".*?@customconnector\s*", "", RegexOptions.IgnoreCase).Trim();
             var connectorResult = await customConnectors.HandleAsync(command);
             AddMessage("customconnector", connectorResult);
             SetOrbState("idle");
@@ -225,7 +225,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (Regex.IsMatch(prompt, @"@One-Api\\b", RegexOptions.IgnoreCase))
+        if (Regex.IsMatch(prompt, @"@One-Api\b", RegexOptions.IgnoreCase))
         {
             AddMessage("One-Api", "ALLINONE API keys are managed in Account → ALLINONE API. Keys are generated locally, the secret is shown once, and only its hash is stored.");
             SetOrbState("idle");
@@ -240,6 +240,7 @@ public partial class MainWindow : Window
                            prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) ||
                            prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase);
         string? searchQuery = null;
+        IReadOnlyList<SearchResult>? searchResults = null;
         if (shouldSearch)
         {
             searchQuery = Regex.Replace(prompt, @"@(SearchInOne|Website|YouTube)\b", "", RegexOptions.IgnoreCase).Trim();
@@ -251,14 +252,14 @@ public partial class MainWindow : Window
             if (string.IsNullOrWhiteSpace(searchQuery))
                 searchQuery = prompt;
 
-            await RunSearchAsync(searchQuery);
+            searchResults = await RunSearchAsync(searchQuery);
         }
 
         try
         {
             string? searchContext = null;
-            if (shouldSearch && searchQuery is not null)
-                searchContext = await BuildSearchContextAsync(searchQuery);
+            if (searchResults is not null)
+                searchContext = BuildSearchContext(searchResults);
 
             var role = prompt.Contains("@CodeInOne", StringComparison.OrdinalIgnoreCase)
                 ? "code"
@@ -278,13 +279,13 @@ public partial class MainWindow : Window
         SaveHistory();
     }
 
-    private async Task RunSearchAsync(string query)
+    private async Task<IReadOnlyList<SearchResult>?> RunSearchAsync(string query)
     {
         try
         {
             StatusText.Text = "● SearchInOne researching…";
             var results = await searchInOne.SearchAsync(query);
-            if (results.Count == 0) { AddMessage("SearchInOne", $"No web results were returned for: {query}"); return; }
+            if (results.Count == 0) { AddMessage("SearchInOne", $"No web results were returned for: {query}"); return results; }
 
             AddMessage("SearchInOne", $"Found {results.Count} web results for: {query}");
             foreach (var result in results)
@@ -311,8 +312,9 @@ public partial class MainWindow : Window
             }
             Messages.Children.Add(sourcePanel);
             MessagesScroll.ScrollToEnd();
+            return results;
         }
-        catch (Exception ex) { AddMessage("SearchInOne", $"Internet search failed safely: {ex.Message}"); }
+        catch (Exception ex) { AddMessage("SearchInOne", $"Internet search failed safely: {ex.Message}"); return null; }
         finally { StatusText.Text = "● Ready"; }
     }
 
@@ -321,11 +323,9 @@ public partial class MainWindow : Window
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
     }
 
-    private async Task<string?> BuildSearchContextAsync(string query)
+    private static string? BuildSearchContext(IReadOnlyList<SearchResult> results)
     {
-        var results = await searchInOne.SearchAsync(query);
         if (results.Count == 0) return null;
-
         return string.Join("\n", results.Select((r, i) =>
             $"[{i + 1}] {r.Title}\nURL: {r.Url}"));
     }
