@@ -1,0 +1,31 @@
+<Window x:Class="ALLINONE.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="ALLINONE" Width="1200" Height="760" MinWidth="920" MinHeight="620" Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}" WindowStartupLocation="CenterScreen">
+<Grid>
+<Grid x:Name="SetupView" Visibility="Collapsed" Background="{StaticResource BackgroundBrush}">
+<Border Width="720" Padding="42" Background="{StaticResource PanelBrush}" CornerRadius="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+<StackPanel>
+<TextBlock Text="ALLINONE" FontSize="38" FontWeight="Bold"/>
+<TextBlock Text="Your private AI workspace." Foreground="{StaticResource MutedBrush}" FontSize="17" Margin="0,6,0,30"/>
+<TextBlock x:Name="SetupStep" Text="1 / 4" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+<TextBlock x:Name="SetupTitle" Text="Welcome" FontSize="28" FontWeight="SemiBold" Margin="0,12,0,8"/>
+<TextBlock x:Name="SetupDescription" TextWrapping="Wrap" FontSize="15" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,22"/>
+<StackPanel x:Name="NamePanel"><TextBlock Text="Display name" Margin="0,0,0,7"/><TextBox x:Name="NameBox" Height="42" Padding="12" FontSize="15"/></StackPanel>
+<CheckBox x:Name="SafeModeBox" Content="Enable Safe Mode" IsChecked="True" Margin="0,16,0,0"/>
+<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,30,0,0"><Button x:Name="SetupBack" Content="Back" Width="90" Margin="0,0,10,0" Click="SetupBack_Click"/><Button x:Name="SetupNext" Content="Continue" Width="110" Click="SetupNext_Click"/></StackPanel>
+</StackPanel></Border></Grid>
+<Grid x:Name="AppView" Visibility="Collapsed">
+<Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+<Border Grid.Column="0" Background="{StaticResource PanelBrush}" Padding="18"><DockPanel>
+<TextBlock DockPanel.Dock="Top" Text="ALLINONE" FontSize="24" FontWeight="Bold" Margin="0,8,0,28"/>
+<StackPanel><Button Content="Chat" Tag="Chat" Click="Nav_Click" Margin="0,0,0,8"/><Button Content="Projects" Tag="Projects" Click="Nav_Click" Margin="0,0,0,8"/><Button Content="Settings" Tag="Settings" Click="Nav_Click"/></StackPanel>
+<TextBlock DockPanel.Dock="Bottom" x:Name="StatusText" Text="AI engine: local-ready" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,20,0,8"/>
+</DockPanel></Border>
+<Grid Grid.Column="1" Margin="26">
+<Grid x:Name="ChatPage"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+<StackPanel><TextBlock Text="AI Chat" FontSize="30" FontWeight="SemiBold"/><TextBlock Text="Reasoning, coding, planning, and project assistance." Foreground="{StaticResource MutedBrush}" Margin="0,4,0,18"/></StackPanel>
+<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"><StackPanel x:Name="Messages"/></ScrollViewer>
+<Grid Grid.Row="2" Margin="0,18,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="110"/></Grid.ColumnDefinitions><TextBox x:Name="PromptBox" Grid.Column="0" MinHeight="52" Padding="14" AcceptsReturn="True" TextWrapping="Wrap" KeyDown="PromptBox_KeyDown"/><Button Grid.Column="1" Content="Send" Margin="12,0,0,0" Click="Send_Click"/></Grid>
+</Grid>
+<Grid x:Name="ProjectsPage" Visibility="Collapsed"><TextBlock Text="Projects" FontSize="30" FontWeight="SemiBold"/><TextBlock Text="Organize workspaces for coding, games, research, and ideas." Foreground="{StaticResource MutedBrush}" Margin="0,4,0,20"/></Grid>
+<Grid x:Name="SettingsPage" Visibility="Collapsed"><TextBlock Text="Settings" FontSize="30" FontWeight="SemiBold"/><StackPanel Width="620" Margin="0,22,0,0"><TextBlock Text="Display name"/><TextBox x:Name="SettingsName" Height="40" Margin="0,7,0,16" Padding="10"/><CheckBox x:Name="SettingsSafe" Content="Safe Mode" Margin="0,0,0,16"/><Button Content="Save settings" Width="140" HorizontalAlignment="Left" Click="SaveSettings_Click"/><TextBlock Text="AI architecture" FontSize="18" FontWeight="SemiBold" Margin="0,30,0,8"/><TextBlock Text="Provider-neutral design: the model layer can be local or an approved remote provider, while UI, memory, and permissions remain separate." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"/></StackPanel></Grid>
+</Grid></Grid></Grid></Grid>
