@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ALLINONE;
 
@@ -112,15 +113,10 @@ public sealed class ClerkAuthService
 
     private sealed class ClerkTokenResponse
     {
-        public string AccessToken { get; set; } = "";
-        public string? RefreshToken { get; set; }
-        public string? IdToken { get; set; }
-        public int ExpiresIn { get; set; }
-
-        public string access_token { set => AccessToken = value; }
-        public string? refresh_token { set => RefreshToken = value; }
-        public string? id_token { set => IdToken = value; }
-        public int expires_in { set => ExpiresIn = value; }
+        [JsonPropertyName("access_token")] public string AccessToken { get; set; } = "";
+        [JsonPropertyName("refresh_token")] public string? RefreshToken { get; set; }
+        [JsonPropertyName("id_token")] public string? IdToken { get; set; }
+        [JsonPropertyName("expires_in")] public int ExpiresIn { get; set; }
     }
 
     public sealed class ClerkUser
