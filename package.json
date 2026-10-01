@@ -1,40 +1,9 @@
 {
   "name": "allinone",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "ALLINONE — One AI. Every project.",
-  "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "start:desktop": "electron .",
-    "dist": "electron-builder --win nsis",
-    "build:desktop": "electron-builder --win nsis"
-  },
-  "devDependencies": {
-    "electron": "^38.1.0",
-    "electron-builder": "^26.0.12"
-  },
-  "build": {
-    "appId": "com.allinone.app",
-    "productName": "ALLINONE",
-    "artifactName": "ALLINONE-Setup-${version}.exe",
-    "files": [
-      "main.js",
-      "preload.js",
-      "src/**/*"
-    ],
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "ALLINONE"
-    }
+    "note": "The native Windows app is built from src/ALLINONE/ALLINONE.csproj with GitHub Actions."
   }
 }
