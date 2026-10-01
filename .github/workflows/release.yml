@@ -1,0 +1,38 @@
+name: ALLINONE Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Publish ALLINONE
+        shell: pwsh
+        run: |
+          dotnet publish src/ALLINONE/ALLINONE.csproj -c Release -r win-x64 --self-contained true -o publish
+          Compress-Archive -Path publish/* -DestinationPath ALLINONE-win-x64.zip
+      - name: Create checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash ALLINONE-win-x64.zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  ALLINONE-win-x64.zip" | Out-File -Encoding ascii checksums.txt
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          gh release create $tag ALLINONE-win-x64.zip checksums.txt --title "ALLINONE $tag" --generate-notes

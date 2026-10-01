@@ -12,6 +12,8 @@ public partial class MainWindow : Window
     private readonly string dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ALLINONE");
     private readonly string settingsPath;
     private readonly ClerkAuthService clerk;
+    private readonly UpdateService updater = new();
+    private readonly SearchInOne searchInOne = new();
     private Settings settings = new();
     private int setupStep = 1;
     private readonly DispatcherTimer orbTimer = new() { Interval = TimeSpan.FromMilliseconds(70) };
@@ -29,6 +31,7 @@ public partial class MainWindow : Window
         orbTimer.Tick += (_, _) => AnimateOrb();
         orbTimer.Start();
         if (settings.SetupComplete) ShowApp(); else ShowSetup();
+        _ = CheckForUpdatesAsync();
     }
 
     private void LoadSettings()
@@ -92,6 +95,7 @@ public partial class MainWindow : Window
             : (clerk.IsConfigured ? "Not signed in" : "Clerk setup required");
         AddMessage("ALLINONE", $"Ready, {settings.DisplayName}. What are we building?");
         SetOrbState("idle");
+        StatusText.Text = "● Auto-updater active";
     }
 
     private void Nav_Click(object sender, RoutedEventArgs e)
@@ -127,8 +131,31 @@ public partial class MainWindow : Window
                 || prompt.Contains("video game", StringComparison.OrdinalIgnoreCase);
 
         SetOrbState(gameMode ? "game" : "thinking");
+        if (prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) || prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase))
+        {
+            var query = prompt.Split(' ', 2).ElementAtOrDefault(1) ?? prompt;
+            searchInOne.OpenResearch(query);
+            AddMessage("SearchInOne", $"Opened Google AI Mode for: {query}\nSources can be opened through Google AI Mode, Google Search, Maps, YouTube, and TikTok.");
+        }
         AddMessage("ALLINONE", LocalFallback(prompt));
         SetOrbState(gameMode ? "game" : "idle");
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        var update = await updater.CheckAsync();
+        if (update is null) return;
+        await Dispatcher.InvokeAsync(() => StatusText.Text = $"● Updating to {update.Version}…");
+        var installed = await updater.InstallAsync(update);
+        if (installed)
+        {
+            MessageBox.Show($"ALLINONE {update.Version} was downloaded and will be installed now.", "ALLINONE update", MessageBoxButton.OK, MessageBoxImage.Information);
+            Application.Current.Shutdown();
+        }
+        else
+        {
+            await Dispatcher.InvokeAsync(() => StatusText.Text = $"● Update {update.Version} available");
+        }
     }
 
     private string LocalFallback(string prompt)
