@@ -58,7 +58,7 @@ public sealed class AllInOneApiServer : IDisposable
             var path = context.Request.Url?.AbsolutePath ?? "";
             if (context.Request.HttpMethod == "GET" && path.EndsWith("/models", StringComparison.OrdinalIgnoreCase))
             {
-                WriteJson(context, 200, new { object = "list", data = new[] { new { id = "ALLINONE", @object = "model", owned_by = "ALLINONE" } } });
+                WriteJson(context, 200, new { @object = "list", data = new[] { new { id = "ALLINONE", @object = "model", owned_by = "ALLINONE" } } });
                 return;
             }
 
