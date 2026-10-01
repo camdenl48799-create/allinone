@@ -62,9 +62,10 @@ public sealed class SearchInOne
 
             if (Uri.TryCreate(url, UriKind.Absolute, out var parsed))
             {
-                var uddg = System.Web.HttpUtility.ParseQueryString(parsed.Query).Get("uddg");
-                if (!string.IsNullOrWhiteSpace(uddg))
-                    url = uddg;
+                var query = parsed.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries);
+                var uddgPart = query.FirstOrDefault(part => part.StartsWith("uddg=", StringComparison.OrdinalIgnoreCase));
+                if (uddgPart is not null)
+                    url = Uri.UnescapeDataString(uddgPart["uddg=".Length..]);
             }
 
             if (!Uri.TryCreate(url, UriKind.Absolute, out _))
