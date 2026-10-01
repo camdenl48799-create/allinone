@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
     private int orbFrame;
     private bool gameMode;
     private bool searchMode;
+    private bool mentionPopupOpen;
 
     public MainWindow()
     {
@@ -107,7 +109,82 @@ public partial class MainWindow : Window
 
     private void PromptBox_KeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && mentionPopupOpen) { HideMentionPopup(); e.Handled = true; return; }
         if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control) { _ = SendPromptAsync(); e.Handled = true; }
+    }
+
+    private void PromptBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var text = PromptBox.Text;
+        var caret = PromptBox.CaretIndex;
+        var at = text.LastIndexOf('@', Math.Max(0, caret - 1));
+        if (at < 0 || (at > 0 && !char.IsWhiteSpace(text[at - 1]))) { HideMentionPopup(); return; }
+
+        var query = text[(at + 1)..caret];
+        if (query.Contains(' ') || query.Contains('\n')) { HideMentionPopup(); return; }
+
+        var options = new[] { "SearchInOne", "CodeInOne", "Project", "File", "Website", "YouTube", "Model" }
+            .Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        ShowMentionPopup(options);
+    }
+
+    private void ShowMentionPopup(IReadOnlyList<string> options)
+    {
+        MentionList.Children.Clear();
+        if (options.Count == 0) { HideMentionPopup(); return; }
+
+        foreach (var option in options)
+        {
+            var button = new Button
+            {
+                Content = option switch
+                {
+                    "SearchInOne" => "⌕  SearchInOne   Search the internet",
+                    "CodeInOne" => "⌘  CodeInOne      Build and code",
+                    "Project" => "◈  Project          Attach a project",
+                    "File" => "▣  File                Attach a local file",
+                    "Website" => "◉  Website         Research a website",
+                    "YouTube" => "▶  YouTube        Search YouTube",
+                    _ => "✦  Model              Choose model"
+                },
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Padding = new Thickness(12, 9),
+                Margin = new Thickness(0, 1, 0, 1)
+            };
+            button.Click += (_, _) => SelectMention(option);
+            MentionList.Children.Add(button);
+        }
+
+        MentionPopup.Visibility = Visibility.Visible;
+        mentionPopupOpen = true;
+    }
+
+    private void SelectMention(string mention)
+    {
+        var text = PromptBox.Text;
+        var caret = PromptBox.CaretIndex;
+        var at = text.LastIndexOf('@', Math.Max(0, caret - 1));
+        if (at < 0) return;
+
+        var replacement = "@" + mention + " ";
+        PromptBox.Text = text.Remove(at, caret - at).Insert(at, replacement);
+        PromptBox.CaretIndex = at + replacement.Length;
+        HideMentionPopup();
+        PromptBox.Focus();
+
+        if (mention == "SearchInOne")
+        {
+            searchMode = true;
+            SearchButton.Content = "SearchInOne ON";
+            StatusText.Text = "● SearchInOne ready";
+        }
+    }
+
+    private void HideMentionPopup()
+    {
+        MentionPopup.Visibility = Visibility.Collapsed;
+        mentionPopupOpen = false;
     }
 
     private async Task SendPromptAsync()
@@ -120,12 +197,23 @@ public partial class MainWindow : Window
         gameMode = prompt.Contains("game", StringComparison.OrdinalIgnoreCase) || prompt.Contains("gameplay", StringComparison.OrdinalIgnoreCase) || prompt.Contains("video game", StringComparison.OrdinalIgnoreCase);
         SetOrbState(gameMode ? "game" : "thinking");
 
-        var shouldSearch = searchMode || prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) || prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase);
+        var hasSearchMention = Regex.IsMatch(prompt, @"@SearchInOne\b", RegexOptions.IgnoreCase);
+        var hasWebsiteMention = Regex.IsMatch(prompt, @"@Website\b", RegexOptions.IgnoreCase);
+        var hasYouTubeMention = Regex.IsMatch(prompt, @"@YouTube\b", RegexOptions.IgnoreCase);
+        var shouldSearch = searchMode || hasSearchMention || hasWebsiteMention || hasYouTubeMention ||
+                           prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) ||
+                           prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase);
         if (shouldSearch)
         {
-            var query = prompt;
-            if (prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) || prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase))
-                query = prompt.Split(' ', 2).ElementAtOrDefault(1) ?? prompt;
+            var query = Regex.Replace(prompt, @"@(SearchInOne|Website|YouTube)\b", "", RegexOptions.IgnoreCase).Trim();
+            if (prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase))
+                query = query["research ".Length..].Trim();
+            else if (prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase))
+                query = query["search ".Length..].Trim();
+
+            if (string.IsNullOrWhiteSpace(query))
+                query = prompt;
+
             await RunSearchAsync(query);
         }
 
