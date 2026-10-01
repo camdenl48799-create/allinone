@@ -1,0 +1,10 @@
+<Application x:Class="ALLINONE.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" StartupUri="MainWindow.xaml">
+  <Application.Resources>
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#0B0D12"/>
+    <SolidColorBrush x:Key="PanelBrush" Color="#12151D"/>
+    <SolidColorBrush x:Key="Panel2Brush" Color="#181C26"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#E01E2B"/>
+    <SolidColorBrush x:Key="TextBrush" Color="#F5F7FA"/>
+    <SolidColorBrush x:Key="MutedBrush" Color="#9BA3B2"/>
+  </Application.Resources>
+</Application>
