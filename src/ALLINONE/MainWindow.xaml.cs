@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,6 +12,7 @@ public partial class MainWindow : Window
 {
     private readonly string dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ALLINONE");
     private readonly string settingsPath;
+    private readonly string historyPath;
     private readonly ClerkAuthService clerk;
     private readonly UpdateService updater = new();
     private readonly SearchInOne searchInOne = new();
@@ -19,11 +21,13 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer orbTimer = new() { Interval = TimeSpan.FromMilliseconds(70) };
     private int orbFrame;
     private bool gameMode;
+    private bool searchMode;
 
     public MainWindow()
     {
         InitializeComponent();
         settingsPath = Path.Combine(dataDir, "settings.json");
+        historyPath = Path.Combine(dataDir, "chat-history.json");
         Directory.CreateDirectory(dataDir);
         clerk = new ClerkAuthService(dataDir);
         LoadSettings();
@@ -36,11 +40,7 @@ public partial class MainWindow : Window
 
     private void LoadSettings()
     {
-        try
-        {
-            if (File.Exists(settingsPath))
-                settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath)) ?? new Settings();
-        }
+        try { if (File.Exists(settingsPath)) settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath)) ?? new Settings(); }
         catch { settings = new Settings(); }
     }
 
@@ -52,10 +52,7 @@ public partial class MainWindow : Window
 
     private void ShowSetup()
     {
-        SetupView.Visibility = Visibility.Visible;
-        AppView.Visibility = Visibility.Collapsed;
-        SetupBack.Visibility = Visibility.Collapsed;
-        RenderSetup();
+        SetupView.Visibility = Visibility.Visible; AppView.Visibility = Visibility.Collapsed; SetupBack.Visibility = Visibility.Collapsed; RenderSetup();
     }
 
     private void RenderSetup()
@@ -64,38 +61,29 @@ public partial class MainWindow : Window
         SetupBack.Visibility = setupStep > 1 ? Visibility.Visible : Visibility.Collapsed;
         NamePanel.Visibility = setupStep == 2 ? Visibility.Visible : Visibility.Collapsed;
         SafeModeBox.Visibility = setupStep == 3 ? Visibility.Visible : Visibility.Collapsed;
-
-        if (setupStep == 1) { SetupTitle.Text = "Welcome"; SetupDescription.Text = "A native Windows AI workspace with a premium interface, local-first storage, and animated AI state."; }
+        if (setupStep == 1) { SetupTitle.Text = "Welcome"; SetupDescription.Text = "A native Windows AI workspace with SearchInOne, persistent chat, secure account sessions, and a real update system."; }
         if (setupStep == 2) { SetupTitle.Text = "Make it yours"; SetupDescription.Text = "Choose the name ALLINONE should use for you."; NameBox.Text = settings.DisplayName; }
         if (setupStep == 3) { SetupTitle.Text = "Safety & privacy"; SetupDescription.Text = "Safe Mode adds extra guardrails to AI features."; SafeModeBox.IsChecked = settings.SafeMode; }
-        if (setupStep == 4) { SetupTitle.Text = "Ready"; SetupDescription.Text = "Your workspace is configured. The model, memory, tools, and account layers can grow independently."; SetupNext.Content = "Launch ALLINONE"; }
+        if (setupStep == 4) { SetupTitle.Text = "Ready"; SetupDescription.Text = "Your workspace is configured. The model runtime, CodeInOne, SearchInOne, memory, and tools can evolve independently."; SetupNext.Content = "Launch ALLINONE"; }
     }
 
     private void SetupNext_Click(object sender, RoutedEventArgs e)
     {
         if (setupStep == 2) settings.DisplayName = string.IsNullOrWhiteSpace(NameBox.Text) ? "User" : NameBox.Text.Trim();
         if (setupStep == 3) settings.SafeMode = SafeModeBox.IsChecked == true;
-        if (setupStep < 4) { setupStep++; RenderSetup(); }
-        else { settings.SetupComplete = true; SaveSettingsToDisk(); ShowApp(); }
+        if (setupStep < 4) { setupStep++; RenderSetup(); } else { settings.SetupComplete = true; SaveSettingsToDisk(); ShowApp(); }
     }
 
-    private void SetupBack_Click(object sender, RoutedEventArgs e)
-    {
-        if (setupStep > 1) { setupStep--; RenderSetup(); }
-    }
+    private void SetupBack_Click(object sender, RoutedEventArgs e) { if (setupStep > 1) { setupStep--; RenderSetup(); } }
 
     private void ShowApp()
     {
-        SetupView.Visibility = Visibility.Collapsed;
-        AppView.Visibility = Visibility.Visible;
-        SettingsName.Text = settings.DisplayName;
-        SettingsSafe.IsChecked = settings.SafeMode;
-        AuthStatus.Text = settings.SignedIn
-            ? $"Signed in as {settings.AccountName ?? settings.DisplayName}"
-            : (clerk.IsConfigured ? "Not signed in" : "Clerk setup required");
-        AddMessage("ALLINONE", $"Ready, {settings.DisplayName}. What are we building?");
-        SetOrbState("idle");
-        StatusText.Text = "● Auto-updater active";
+        SetupView.Visibility = Visibility.Collapsed; AppView.Visibility = Visibility.Visible;
+        SettingsName.Text = settings.DisplayName; SettingsSafe.IsChecked = settings.SafeMode;
+        AuthStatus.Text = settings.SignedIn ? $"Signed in as {settings.AccountName ?? settings.DisplayName}" : (clerk.IsConfigured ? "Not signed in" : "Clerk setup required");
+        RestoreHistory();
+        if (Messages.Children.Count == 0) AddMessage("ALLINONE", $"Ready, {settings.DisplayName}. What are we building?");
+        SetOrbState("idle"); StatusText.Text = "● Auto-updater active";
     }
 
     private void Nav_Click(object sender, RoutedEventArgs e)
@@ -107,57 +95,86 @@ public partial class MainWindow : Window
         AccountPage.Visibility = tag == "Account" ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private void SearchMode_Click(object sender, RoutedEventArgs e)
+    {
+        searchMode = !searchMode;
+        SearchButton.Content = searchMode ? "SearchInOne ON" : "SearchInOne";
+        StatusText.Text = searchMode ? "● SearchInOne ready" : "● Auto-updater active";
+        PromptBox.Focus();
+    }
+
     private void Send_Click(object sender, RoutedEventArgs e) => _ = SendPromptAsync();
 
     private void PromptBox_KeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control)
-        {
-            _ = SendPromptAsync();
-            e.Handled = true;
-        }
+        if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control) { _ = SendPromptAsync(); e.Handled = true; }
     }
 
     private async Task SendPromptAsync()
     {
         var prompt = PromptBox.Text.Trim();
         if (prompt.Length == 0) return;
-
         AddMessage(settings.DisplayName, prompt);
         PromptBox.Clear();
 
-        gameMode = prompt.Contains("game", StringComparison.OrdinalIgnoreCase)
-                || prompt.Contains("gameplay", StringComparison.OrdinalIgnoreCase)
-                || prompt.Contains("video game", StringComparison.OrdinalIgnoreCase);
-
+        gameMode = prompt.Contains("game", StringComparison.OrdinalIgnoreCase) || prompt.Contains("gameplay", StringComparison.OrdinalIgnoreCase) || prompt.Contains("video game", StringComparison.OrdinalIgnoreCase);
         SetOrbState(gameMode ? "game" : "thinking");
 
-        if (prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase)
-            || prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase))
+        var shouldSearch = searchMode || prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) || prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase);
+        if (shouldSearch)
         {
-            var query = prompt.Split(' ', 2).ElementAtOrDefault(1) ?? prompt;
-
-            try
-            {
-                var results = await searchInOne.SearchAsync(query);
-                if (results.Count == 0)
-                {
-                    AddMessage("SearchInOne", $"No web results were returned for: {query}");
-                }
-                else
-                {
-                    var lines = results.Select((result, index) => $"{index + 1}. {result.Title}\n   {result.Url}");
-                    AddMessage("SearchInOne", $"Internet results for: {query}\n\n{string.Join("\n", lines)}");
-                }
-            }
-            catch (Exception ex)
-            {
-                AddMessage("SearchInOne", $"Internet search failed: {ex.Message}");
-            }
+            var query = prompt;
+            if (prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) || prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase))
+                query = prompt.Split(' ', 2).ElementAtOrDefault(1) ?? prompt;
+            await RunSearchAsync(query);
         }
 
-        AddMessage("ALLINONE", LocalFallback(prompt));
+        AddMessage("ALLINONE", LocalFallback(prompt, shouldSearch));
         SetOrbState(gameMode ? "game" : "idle");
+        SaveHistory();
+    }
+
+    private async Task RunSearchAsync(string query)
+    {
+        try
+        {
+            StatusText.Text = "● SearchInOne researching…";
+            var results = await searchInOne.SearchAsync(query);
+            if (results.Count == 0) { AddMessage("SearchInOne", $"No web results were returned for: {query}"); return; }
+
+            AddMessage("SearchInOne", $"Found {results.Count} web results for: {query}");
+            foreach (var result in results)
+            {
+                var button = new Button
+                {
+                    Content = result.Title,
+                    ToolTip = result.Url,
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    Background = (Brush)FindResource("Panel2Brush"),
+                    Margin = new Thickness(0, 0, 0, 7),
+                    Padding = new Thickness(12, 9)
+                };
+                button.Click += (_, _) => OpenUrl(result.Url);
+                Messages.Children.Add(button);
+            }
+
+            var sourcePanel = new WrapPanel { Margin = new Thickness(0, 4, 0, 12) };
+            foreach (var source in searchInOne.BuildSources(query))
+            {
+                var button = new Button { Content = source.Name, ToolTip = source.Purpose, Padding = new Thickness(10, 6), Margin = new Thickness(0, 0, 7, 7) };
+                button.Click += (_, _) => OpenUrl(source.Url);
+                sourcePanel.Children.Add(button);
+            }
+            Messages.Children.Add(sourcePanel);
+            MessagesScroll.ScrollToEnd();
+        }
+        catch (Exception ex) { AddMessage("SearchInOne", $"Internet search failed safely: {ex.Message}"); }
+        finally { StatusText.Text = "● Ready"; }
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
     }
 
     private async Task CheckForUpdatesAsync()
@@ -166,32 +183,32 @@ public partial class MainWindow : Window
         if (update is null) return;
         await Dispatcher.InvokeAsync(() => StatusText.Text = $"● Updating to {update.Version}…");
         var installed = await updater.InstallAsync(update);
-        if (installed)
-        {
-            MessageBox.Show($"ALLINONE {update.Version} was downloaded and will be installed now.", "ALLINONE update", MessageBoxButton.OK, MessageBoxImage.Information);
-            Application.Current.Shutdown();
-        }
-        else
-        {
-            await Dispatcher.InvokeAsync(() => StatusText.Text = $"● Update {update.Version} available");
-        }
+        if (installed) { MessageBox.Show($"ALLINONE {update.Version} was downloaded and will be installed now.", "ALLINONE update", MessageBoxButton.OK, MessageBoxImage.Information); Application.Current.Shutdown(); }
+        else await Dispatcher.InvokeAsync(() => StatusText.Text = $"● Update {update.Version} available");
     }
 
-    private string LocalFallback(string prompt)
+    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
     {
-        if (gameMode)
-            return "Game-creation mode activated. The red AI orb is now representing the game-building workflow. A real model runtime can generate the game's code, assets, systems, and project files here.";
-        if (prompt.Contains("code", StringComparison.OrdinalIgnoreCase))
-            return "Coding mode activated. ALLINONE is structured for architecture, debugging, project files, memory, and permission-controlled tools.";
-        if (prompt.Contains("hello", StringComparison.OrdinalIgnoreCase) || prompt.Contains("hi", StringComparison.OrdinalIgnoreCase))
-            return $"Hey {settings.DisplayName}! ALLINONE is ready.";
+        StatusText.Text = "● Checking for updates…";
+        var update = await updater.CheckNowAsync();
+        if (update is null) { StatusText.Text = "● ALLINONE is up to date"; return; }
+        StatusText.Text = $"● Updating to {update.Version}…";
+        if (await updater.InstallAsync(update)) Application.Current.Shutdown(); else StatusText.Text = $"● Update {update.Version} available";
+    }
+
+    private string LocalFallback(string prompt, bool searched)
+    {
+        if (gameMode) return "CodeInOne game-building mode is ready. A model runtime can generate the game's code, assets, systems, and project files here.";
+        if (searched) return "SearchInOne returned web sources above. The next model layer can use those results to produce a sourced answer instead of pretending it already knows everything.";
+        if (prompt.Contains("code", StringComparison.OrdinalIgnoreCase)) return "CodeInOne mode activated. The workspace is ready for architecture, debugging, project files, memory, and permission-controlled tools.";
+        if (prompt.Contains("hello", StringComparison.OrdinalIgnoreCase) || prompt.Contains("hi", StringComparison.OrdinalIgnoreCase)) return $"Hey {settings.DisplayName}! ALLINONE is ready.";
         return "Request received. The native shell is ready for a high-capability model runtime, persistent memory, retrieval, and permission-controlled tools.";
     }
 
     private void SetOrbState(string state)
     {
         gameMode = state == "game";
-        AIOrbText.Text = state == "game" ? "🎮" : "AI";
+        AIOrbText.Text = state == "game" ? "🎮" : state == "thinking" ? "…" : "AI";
         AIOrbText.FontSize = state == "game" ? 42 : 34;
     }
 
@@ -201,40 +218,44 @@ public partial class MainWindow : Window
         orbFrame++;
         var phase = orbFrame * (gameMode ? 0.32 : 0.12);
         var pulse = gameMode ? 1.0 + Math.Sin(phase) * 0.055 : 1.0 + Math.Sin(phase) * 0.025;
-        AIOrbScale.ScaleX = pulse;
-        AIOrbScale.ScaleY = pulse;
-
-        if (gameMode && orbFrame % 8 == 0)
-            AIOrbText.RenderTransform = new RotateTransform(Math.Sin(orbFrame * 0.8) * 5);
-        else if (!gameMode)
-            AIOrbText.RenderTransform = new RotateTransform(0);
+        AIOrbScale.ScaleX = pulse; AIOrbScale.ScaleY = pulse;
+        AIOrbText.RenderTransform = gameMode ? new RotateTransform(Math.Sin(orbFrame * 0.8) * 5) : new RotateTransform(0);
     }
 
     private void AddMessage(string author, string text)
     {
         WelcomePanel.Visibility = Visibility.Collapsed;
-        var border = new Border
-        {
-            Background = (Brush)FindResource("Panel2Brush"),
-            BorderBrush = (Brush)FindResource("BorderBrush"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(16),
-            Margin = new Thickness(0, 0, 0, 12)
-        };
+        var border = new Border { Background = (Brush)FindResource("Panel2Brush"), BorderBrush = (Brush)FindResource("BorderBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12), Padding = new Thickness(16), Margin = new Thickness(0, 0, 0, 12) };
         var panel = new StackPanel();
         panel.Children.Add(new TextBlock { Text = author, FontWeight = FontWeights.SemiBold, Foreground = (Brush)FindResource("AccentBrush") });
         panel.Children.Add(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 7, 0, 0), FontSize = 15 });
-        border.Child = panel;
-        Messages.Children.Add(border);
+        border.Child = panel; Messages.Children.Add(border); MessagesScroll.ScrollToEnd();
+    }
+
+    private void SaveHistory()
+    {
+        try
+        {
+            var entries = Messages.Children.OfType<Border>().Select(b => (b.Child as StackPanel)?.Children.OfType<TextBlock>().ToArray()).Where(x => x?.Length >= 2).Select(x => new ChatEntry(x![0].Text, x[1].Text)).TakeLast(100).ToList();
+            File.WriteAllText(historyPath, JsonSerializer.Serialize(entries, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch { }
+    }
+
+    private void RestoreHistory()
+    {
+        try
+        {
+            if (!File.Exists(historyPath)) return;
+            var entries = JsonSerializer.Deserialize<List<ChatEntry>>(File.ReadAllText(historyPath)) ?? [];
+            foreach (var entry in entries.TakeLast(100)) AddMessage(entry.Author, entry.Text);
+        }
+        catch { }
     }
 
     private void Theme_Click(object sender, RoutedEventArgs e)
     {
-        var tag = (sender as Button)?.Tag?.ToString();
-        ApplyTheme(tag == "Light" ? "Light" : "Dark");
-        settings.Theme = tag == "Light" ? "Light" : "Dark";
-        SaveSettingsToDisk();
+        var tag = (sender as Button)?.Tag?.ToString(); ApplyTheme(tag == "Light" ? "Light" : "Dark"); settings.Theme = tag == "Light" ? "Light" : "Dark"; SaveSettingsToDisk();
     }
 
     private void ApplyTheme(string theme)
@@ -256,47 +277,30 @@ public partial class MainWindow : Window
 
     private async Task BeginClerkAuthAsync(string provider)
     {
-        if (!clerk.IsConfigured)
-        {
-            AuthStatus.Text = "Clerk isn't configured yet. Add your Clerk frontend API URL and public OAuth client ID.";
-            return;
-        }
-
+        if (!clerk.IsConfigured) { AuthStatus.Text = "Clerk isn't configured yet. Add your Clerk frontend API URL and public OAuth client ID."; return; }
         try
         {
-            AuthStatus.Text = $"Opening Clerk in your browser…";
-            var user = await clerk.SignInAsync();
-            settings.SignedIn = true;
-            settings.AccountName = user?.name ?? user?.email ?? settings.DisplayName;
-            SaveSettingsToDisk();
+            AuthStatus.Text = "Opening Clerk in your browser…";
+            var user = await clerk.SignInAsync(provider);
+            settings.SignedIn = true; settings.AccountName = user?.name ?? user?.email ?? settings.DisplayName; SaveSettingsToDisk();
             AuthStatus.Text = $"Signed in as {settings.AccountName}";
         }
-        catch (OperationCanceledException)
-        {
-            AuthStatus.Text = "Authentication was canceled.";
-        }
-        catch (Exception ex)
-        {
-            AuthStatus.Text = $"Authentication failed: {ex.Message}";
-        }
+        catch (OperationCanceledException) { AuthStatus.Text = "Authentication was canceled."; }
+        catch (Exception ex) { AuthStatus.Text = $"Authentication failed: {ex.Message}"; }
     }
 
     private void SignOut_Click(object sender, RoutedEventArgs e)
     {
-        clerk.SignOut();
-        settings.SignedIn = false;
-        settings.AccountName = null;
-        SaveSettingsToDisk();
-        AuthStatus.Text = "Signed out";
+        clerk.SignOut(); settings.SignedIn = false; settings.AccountName = null; SaveSettingsToDisk(); AuthStatus.Text = "Signed out";
     }
 
     private void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
         settings.DisplayName = string.IsNullOrWhiteSpace(SettingsName.Text) ? "User" : SettingsName.Text.Trim();
-        settings.SafeMode = SettingsSafe.IsChecked == true;
-        SaveSettingsToDisk();
-        StatusText.Text = "● Settings saved";
+        settings.SafeMode = SettingsSafe.IsChecked == true; SaveSettingsToDisk(); StatusText.Text = "● Settings saved";
     }
+
+    private sealed record ChatEntry(string Author, string Text);
 }
 
 public sealed class Settings
