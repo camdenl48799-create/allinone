@@ -69,8 +69,17 @@ public sealed class AllInOneApiServer : IDisposable
                 using var json = JsonDocument.Parse(body);
                 var messages = json.RootElement.TryGetProperty("messages", out var m) ? m : default;
                 var prompt = messages.ValueKind == JsonValueKind.Array
-                    ? string.Join("\n", messages.EnumerateArray().Where(x => x.TryGetProperty("content", out _)).Select(x => x.GetProperty("content").GetString()))
+                    ? string.Join("\n", messages.EnumerateArray().Select(x =>
+                    {
+                        if (!x.TryGetProperty("content", out var content)) return "";
+                        return content.ValueKind == JsonValueKind.String ? content.GetString() ?? "" : content.ToString();
+                    }).Where(x => !string.IsNullOrWhiteSpace(x)))
                     : "";
+                if (string.IsNullOrWhiteSpace(prompt))
+                {
+                    WriteJson(context, 400, new { error = new { message = "messages must contain at least one text message." } });
+                    return;
+                }
                 var answer = await model.GenerateAsync(prompt, role: "general", cancellationToken: cancellationToken);
                 WriteJson(context, 200, new
                 {
