@@ -128,8 +128,7 @@ public partial class MainWindow : Window
         if (at < 0 || (at > 0 && !char.IsWhiteSpace(text[at - 1]))) { HideMentionPopup(); return; }
 
         var query = text[(at + 1)..caret];
-        if (query.Contains(' ') || query.Contains('
-')) { HideMentionPopup(); return; }
+        if (query.Contains(' ') || query.Contains('\n')) { HideMentionPopup(); return; }
 
         var options = new[] { "ALLINONE", "SearchInOne", "CodeInOne", "Project", "File", "Website", "YouTube", "Model" }
             .Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase))
@@ -299,10 +298,8 @@ public partial class MainWindow : Window
         var results = await searchInOne.SearchAsync(query);
         if (results.Count == 0) return null;
 
-        return string.Join("
-", results.Select((r, i) =>
-            $"[{i + 1}] {r.Title}
-URL: {r.Url}"));
+        return string.Join("\n", results.Select((r, i) =>
+            $"[{i + 1}] {r.Title}\nURL: {r.Url}"));
     }
 
     private async Task CheckForUpdatesAsync()
