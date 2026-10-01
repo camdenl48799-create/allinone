@@ -22,7 +22,9 @@ jobs:
       - name: Publish ALLINONE
         shell: pwsh
         run: |
-          dotnet publish src/ALLINONE/ALLINONE.csproj -c Release -r win-x64 --self-contained true -o publish
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v','V')
+          dotnet publish src/ALLINONE/ALLINONE.csproj -c Release -r win-x64 --self-contained true -p:Version=$version -o publish
           Compress-Archive -Path publish/* -DestinationPath ALLINONE-win-x64.zip
       - name: Create checksum
         shell: pwsh
