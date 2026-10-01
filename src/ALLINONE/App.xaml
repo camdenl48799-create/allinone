@@ -3,6 +3,9 @@
     <SolidColorBrush x:Key="BackgroundBrush" Color="#0B0D12"/>
     <SolidColorBrush x:Key="PanelBrush" Color="#12151D"/>
     <SolidColorBrush x:Key="Panel2Brush" Color="#181C26"/>
+    <SolidColorBrush x:Key="InputBrush" Color="#0F1219"/>
+    <SolidColorBrush x:Key="HoverBrush" Color="#202532"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#292F3B"/>
     <SolidColorBrush x:Key="AccentBrush" Color="#E01E2B"/>
     <SolidColorBrush x:Key="TextBrush" Color="#F5F7FA"/>
     <SolidColorBrush x:Key="MutedBrush" Color="#9BA3B2"/>
