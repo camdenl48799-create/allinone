@@ -1,34 +1,23 @@
 # ALLINONE
 
-**One AI. Every project.**
+A local-first AI desktop workspace by NOT USED INC.
 
-Interactive AI project workspace — Demo Mode, no API keys required.
+## v0.1
+- First-launch setup wizard
+- Display name and Safe Mode
+- Local settings and chat-history storage
+- Chat, Projects, and Settings
+- Electron security defaults
+- Demo Mode while the local inference engine is being built
+- Windows NSIS installer configuration
 
-## Live app
+## Run
+npm install
+npm start
 
-https://allinone-flickco.vercel.app
+## Build Windows installer
+npm run dist
 
-## Features
+Output: release/ALLINONE-Setup-0.1.0.exe
 
-- **Dashboard** — describe an idea → project plan + tasks
-- **Projects** — workspaces with Overview, AI, Tasks, Notes
-- **AI Assistant** — chat (Demo Mode until a backend is connected)
-- **School Help** — explain, study, quiz
-- **Writing** — improve drafts while keeping your voice
-- **Code Helper** — explain, debug, generate, improve
-- **Notes** — personal notes with search
-- **Settings** — dark / light theme, clear data
-
-All data is stored in your browser (localStorage).
-
-## Branding
-
-Canva logo: https://www.canva.com/d/JGvrsJC69xHHLnK
-
-## Security
-
-No API keys in the frontend. Real providers need a secure backend later.
-
-## Local use
-
-Open `index.html` in Chrome, Firefox, Safari, or Edge.
+Never commit API keys or model weights.
