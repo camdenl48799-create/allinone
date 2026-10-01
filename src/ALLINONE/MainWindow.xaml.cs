@@ -215,6 +215,24 @@ public partial class MainWindow : Window
         gameMode = prompt.Contains("game", StringComparison.OrdinalIgnoreCase) || prompt.Contains("gameplay", StringComparison.OrdinalIgnoreCase) || prompt.Contains("video game", StringComparison.OrdinalIgnoreCase);
         SetOrbState(gameMode ? "game" : "thinking");
 
+        if (Regex.IsMatch(prompt, @"@customconnector\\b", RegexOptions.IgnoreCase))
+        {
+            var command = Regex.Replace(prompt, @".*?@customconnector\\s*", "", RegexOptions.IgnoreCase).Trim();
+            var connectorResult = await customConnectors.HandleAsync(command);
+            AddMessage("customconnector", connectorResult);
+            SetOrbState("idle");
+            SaveHistory();
+            return;
+        }
+
+        if (Regex.IsMatch(prompt, @"@One-Api\\b", RegexOptions.IgnoreCase))
+        {
+            AddMessage("One-Api", "ALLINONE API keys are managed in Account → ALLINONE API. Keys are generated locally, the secret is shown once, and only its hash is stored.");
+            SetOrbState("idle");
+            SaveHistory();
+            return;
+        }
+
         var hasSearchMention = Regex.IsMatch(prompt, @"@SearchInOne\b", RegexOptions.IgnoreCase);
         var hasWebsiteMention = Regex.IsMatch(prompt, @"@Website\b", RegexOptions.IgnoreCase);
         var hasYouTubeMention = Regex.IsMatch(prompt, @"@YouTube\b", RegexOptions.IgnoreCase);
