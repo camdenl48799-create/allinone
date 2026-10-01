@@ -71,7 +71,13 @@
    </Grid>
    <Border Grid.Row="2" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="16" Padding="8">
     <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="95"/></Grid.ColumnDefinitions>
-     <TextBox x:Name="PromptBox" Grid.Column="0" MinHeight="54" BorderThickness="0" Background="Transparent" AcceptsReturn="True" TextWrapping="Wrap" KeyDown="PromptBox_KeyDown"/>
+     <Grid Grid.Column="0">
+ <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+ <Border x:Name="MentionPopup" Grid.Row="0" Visibility="Collapsed" Background="{StaticResource Panel2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="6" Margin="0,0,0,6">
+  <StackPanel x:Name="MentionList"/>
+ </Border>
+ <TextBox x:Name="PromptBox" Grid.Row="1" MinHeight="54" BorderThickness="0" Background="Transparent" AcceptsReturn="True" TextWrapping="Wrap" KeyDown="PromptBox_KeyDown" TextChanged="PromptBox_TextChanged"/>
+</Grid>
      <Button Grid.Column="1" Content="Send  →" Background="{StaticResource AccentBrush}" Click="Send_Click"/>
     </Grid>
    </Border>
