@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.IO;
 
 namespace ALLINONE;
 
@@ -125,32 +126,33 @@ public sealed class UpdateService
 
             // Use a plain cmd script — no PowerShell.
             var updateScript = Path.Combine(temp, "apply-update.cmd");
-            var script = $@"@echo off
-setlocal
-set PID={Environment.ProcessId}
-set PACKAGE={extractPath}
-set TARGET={targetDir}
-set EXE={currentExe}
-
-:wait
-tasklist /FI ""PID eq %PID%"" 2>NUL | find /I "%PID%" >NUL
-if %ERRORLEVEL%==0 (
-  timeout /T 1 /NOBREAK >NUL
-  goto wait
-)
-
-timeout /T 1 /NOBREAK >NUL
-xcopy /E /Y /Q /I "%PACKAGE%\*" "%TARGET%\" >NUL
-start "" "%EXE%"
-exit /B 0
-";
+            var pid = Environment.ProcessId.ToString();
+            var script =
+                "@echo off" + Environment.NewLine +
+                "setlocal" + Environment.NewLine +
+                "set PID=" + pid + Environment.NewLine +
+                "set PACKAGE=" + extractPath + Environment.NewLine +
+                "set TARGET=" + targetDir + Environment.NewLine +
+                "set EXE=" + currentExe + Environment.NewLine +
+                Environment.NewLine +
+                ":wait" + Environment.NewLine +
+                "tasklist /FI \"PID eq %PID%\" 2>NUL | find /I \"%PID%\" >NUL" + Environment.NewLine +
+                "if %ERRORLEVEL%==0 (" + Environment.NewLine +
+                "  timeout /T 1 /NOBREAK >NUL" + Environment.NewLine +
+                "  goto wait" + Environment.NewLine +
+                ")" + Environment.NewLine +
+                Environment.NewLine +
+                "timeout /T 1 /NOBREAK >NUL" + Environment.NewLine +
+                "xcopy /E /Y /Q /I \"%PACKAGE%\\*\" \"%TARGET%\\\" >NUL" + Environment.NewLine +
+                "start \"\" \"%EXE%\"" + Environment.NewLine +
+                "exit /B 0" + Environment.NewLine;
 
             await File.WriteAllTextAsync(updateScript, script, cancellationToken);
 
             var psi = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $"/C ""{updateScript}""",
+                Arguments = "/C \"" + updateScript + "\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 WorkingDirectory = temp
@@ -175,8 +177,9 @@ exit /B 0
             var state = JsonSerializer.Deserialize<UpdateState>(
                 File.ReadAllText(statePath));
 
-            return state?.LastCheckedUtc is null ||
-                   DateTime.UtcNow - state.LastCheckedUtc.Value >= AutomaticCheckInterval;
+            if (state is null)
+                return true;
+            return DateTime.UtcNow - state.LastCheckedUtc >= AutomaticCheckInterval;
         }
         catch
         {
