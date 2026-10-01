@@ -25,7 +25,7 @@ public sealed class UpdateService
     private static HttpClient CreateClient()
     {
         var client = new HttpClient();
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("ALLINONE-Updater/1.1");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("ALLINONE-Updater/1.2");
         return client;
     }
 
@@ -123,34 +123,37 @@ public sealed class UpdateService
             if (string.IsNullOrWhiteSpace(targetDir))
                 return false;
 
-            var updateScript = Path.Combine(temp, "apply-update.ps1");
+            // Use a plain cmd script — no PowerShell.
+            var updateScript = Path.Combine(temp, "apply-update.cmd");
+            var script = $@"@echo off
+setlocal
+set PID={Environment.ProcessId}
+set PACKAGE={extractPath}
+set TARGET={targetDir}
+set EXE={currentExe}
 
-            var script = @"
-param([int]$PidToWait, [string]$PackageDir, [string]$TargetDir, [string]$ExePath)
+:wait
+tasklist /FI ""PID eq %PID%"" 2>NUL | find /I "%PID%" >NUL
+if %ERRORLEVEL%==0 (
+  timeout /T 1 /NOBREAK >NUL
+  goto wait
+)
 
-try {
-  Wait-Process -Id $PidToWait -Timeout 60 -ErrorAction SilentlyContinue
-  Start-Sleep -Milliseconds 700
-  Copy-Item -Path (Join-Path $PackageDir '*') -Destination $TargetDir -Recurse -Force
-  Start-Process -FilePath $ExePath
-} catch {
-  exit 1
-}
+timeout /T 1 /NOBREAK >NUL
+xcopy /E /Y /Q /I "%PACKAGE%\*" "%TARGET%\" >NUL
+start "" "%EXE%"
+exit /B 0
 ";
 
             await File.WriteAllTextAsync(updateScript, script, cancellationToken);
 
             var psi = new ProcessStartInfo
             {
-                FileName = "powershell.exe",
-                Arguments =
-                    $"-NoProfile -ExecutionPolicy Bypass -File "{updateScript}" " +
-                    $"-PidToWait {Environment.ProcessId} " +
-                    $"-PackageDir "{extractPath}" " +
-                    $"-TargetDir "{targetDir}" " +
-                    $"-ExePath "{currentExe}"",
+                FileName = "cmd.exe",
+                Arguments = $"/C ""{updateScript}""",
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                WorkingDirectory = temp
             };
 
             Process.Start(psi);
