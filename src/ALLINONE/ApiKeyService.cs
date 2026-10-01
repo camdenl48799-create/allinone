@@ -67,7 +67,8 @@ public sealed class ApiKeyService
                     Convert.FromHexString(key.SecretHash),
                     Convert.FromHexString(hash)))
                 {
-                    key.LastUsedAt = DateTimeOffset.UtcNow;
+                    var index = keys.FindIndex(k => k.Id == key.Id);
+                    keys[index] = key with { LastUsedAt = DateTimeOffset.UtcNow };
                     Save();
                     return true;
                 }
