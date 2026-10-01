@@ -1,24 +1,22 @@
-using LLama;
-using LLama.Common;
-using LLama.Sampling;
-using LLama.Transformers;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace ALLINONE;
 
 public sealed class ModelService : IDisposable
 {
-    private readonly string modelPath;
-    private readonly SemaphoreSlim generationLock = new(1, 1);
-    private LLamaWeights? model;
-    private ChatSession? session;
+    private const string OllamaUrl = "http://127.0.0.1:11434";
+    private const string ModelName = "qwen3:0.6b";
 
-    public string ModelId => "ALLINONE Local AI";
-    public bool IsConfigured => File.Exists(modelPath);
-    public string ModelPath => modelPath;
+    private readonly HttpClient http = new() { BaseAddress = new Uri(OllamaUrl) };
+    private readonly SemaphoreSlim generationLock = new(1, 1);
+
+    public string ModelId => "Qwen3 0.6B";
+    public bool IsConfigured { get; private set; }
 
     public ModelService()
     {
-        modelPath = Path.Combine(AppContext.BaseDirectory, "Models", "allinone.gguf");
+        IsConfigured = CheckRuntime();
     }
 
     public async Task<string> GenerateAsync(
@@ -27,52 +25,47 @@ public sealed class ModelService : IDisposable
         string? role = null,
         CancellationToken cancellationToken = default)
     {
-        if (!IsConfigured)
-        {
-            return $"ALLINONE's local AI model is not installed yet. Place the model weights at:{Environment.NewLine}{modelPath}";
-        }
-
         await generationLock.WaitAsync(cancellationToken);
         try
         {
-            EnsureLoaded();
+            if (!await EnsureModelAsync(cancellationToken))
+                return "Qwen3 is not installed or Ollama is not running. Install/start the local Ollama runtime and make the qwen3:0.6b model available.";
 
             var system = role switch
             {
                 "code" => "You are CodeInOne, the coding intelligence inside ALLINONE. Write correct, practical code and be honest about what was actually changed.",
                 "game" => "You are ALLINONE's game-building intelligence. Help design games, gameplay systems, code, project structure, and safe creative features.",
-                "research" => "You are SearchInOne's research intelligence. Use the supplied web sources as evidence, distinguish facts from reasoning, and do not invent sources.",
-                _ => "You are ALLINONE, a helpful local AI assistant. Be accurate, concise, transparent, and useful."
+                "research" => "You are SearchInOne's research intelligence. Use supplied web sources as evidence, distinguish facts from reasoning, and never invent sources.",
+                _ => "You are ALLINONE, a helpful AI assistant powered locally by Qwen3. Be accurate, concise, transparent, and useful."
             };
 
             var fullPrompt = string.IsNullOrWhiteSpace(context)
                 ? prompt
                 : $"{prompt}\n\nSearchInOne source context:\n{context}";
 
-            session!.ChatHistory.AddMessage(AuthorRole.System, system);
-
-            var inference = new InferenceParams
+            var request = new
             {
-                MaxTokens = 512,
-                SamplingPipeline = new DefaultSamplingPipeline
+                model = ModelName,
+                stream = false,
+                think = false,
+                options = new { temperature = 0.6 },
+                messages = new[]
                 {
-                    Temperature = 0.6f
+                    new { role = "system", content = system },
+                    new { role = "user", content = fullPrompt }
                 }
             };
 
-            var result = new System.Text.StringBuilder();
-            await foreach (var token in session.ChatAsync(
-                new ChatHistory.Message(AuthorRole.User, fullPrompt),
-                inference,
-                cancellationToken))
-            {
-                result.Append(token);
-            }
+            using var response = await http.PostAsJsonAsync("/api/chat", request, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Local Qwen3 runtime returned {(int)response.StatusCode}: {body}");
 
-            var answer = result.ToString().Trim();
-            return string.IsNullOrWhiteSpace(answer)
-                ? "The local model returned no text."
-                : answer;
+            using var json = JsonDocument.Parse(body);
+            var answer = json.RootElement.GetProperty("message").GetProperty("content").GetString()?.Trim();
+
+            IsConfigured = true;
+            return string.IsNullOrWhiteSpace(answer) ? "Qwen3 returned no text." : answer;
         }
         finally
         {
@@ -80,27 +73,53 @@ public sealed class ModelService : IDisposable
         }
     }
 
-    private void EnsureLoaded()
+    private bool CheckRuntime()
     {
-        if (session is not null) return;
-
-        var parameters = new ModelParams(modelPath)
+        try
         {
-            ContextSize = 2048,
-            GpuLayerCount = 0
-        };
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/tags");
+            using var response = http.Send(request);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
-        model = LLamaWeights.LoadFromFile(parameters);
-        var context = model.CreateContext(parameters);
-        var executor = new InteractiveExecutor(context);
+    private async Task<bool> EnsureModelAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var tags = await http.GetFromJsonAsync<JsonElement>("/api/tags", cancellationToken);
+            if (tags.TryGetProperty("models", out var models))
+            {
+                foreach (var model in models.EnumerateArray())
+                {
+                    if (model.TryGetProperty("name", out var name) &&
+                        string.Equals(name.GetString(), ModelName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        IsConfigured = true;
+                        return true;
+                    }
+                }
+            }
 
-        session = new ChatSession(executor);
-        session.WithHistoryTransform(new PromptTemplateTransformer(model, withAssistant: true));
+            // Ask the local runtime to pull Qwen3. No third-party API is used.
+            using var pull = await http.PostAsJsonAsync("/api/pull", new { name = ModelName, stream = false }, cancellationToken);
+            IsConfigured = pull.IsSuccessStatusCode;
+            return IsConfigured;
+        }
+        catch
+        {
+            IsConfigured = false;
+            return false;
+        }
     }
 
     public void Dispose()
     {
         generationLock.Dispose();
-        model?.Dispose();
+        http.Dispose();
     }
 }
