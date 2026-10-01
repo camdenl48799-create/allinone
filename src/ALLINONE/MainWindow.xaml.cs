@@ -107,18 +107,18 @@ public partial class MainWindow : Window
         AccountPage.Visibility = tag == "Account" ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void Send_Click(object sender, RoutedEventArgs e) => SendPrompt();
+    private void Send_Click(object sender, RoutedEventArgs e) => _ = SendPromptAsync();
 
     private void PromptBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control)
         {
-            SendPrompt();
+            _ = SendPromptAsync();
             e.Handled = true;
         }
     }
 
-    private void SendPrompt()
+    private async Task SendPromptAsync()
     {
         var prompt = PromptBox.Text.Trim();
         if (prompt.Length == 0) return;
@@ -131,12 +131,31 @@ public partial class MainWindow : Window
                 || prompt.Contains("video game", StringComparison.OrdinalIgnoreCase);
 
         SetOrbState(gameMode ? "game" : "thinking");
-        if (prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) || prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase))
+
+        if (prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase)
+            || prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase))
         {
             var query = prompt.Split(' ', 2).ElementAtOrDefault(1) ?? prompt;
-            searchInOne.OpenResearch(query);
-            AddMessage("SearchInOne", $"Opened Google AI Mode for: {query}\nSources can be opened through Google AI Mode, Google Search, Maps, YouTube, and TikTok.");
+
+            try
+            {
+                var results = await searchInOne.SearchAsync(query);
+                if (results.Count == 0)
+                {
+                    AddMessage("SearchInOne", $"No web results were returned for: {query}");
+                }
+                else
+                {
+                    var lines = results.Select((result, index) => $"{index + 1}. {result.Title}\n   {result.Url}");
+                    AddMessage("SearchInOne", $"Internet results for: {query}\n\n{string.Join("\n", lines)}");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddMessage("SearchInOne", $"Internet search failed: {ex.Message}");
+            }
         }
+
         AddMessage("ALLINONE", LocalFallback(prompt));
         SetOrbState(gameMode ? "game" : "idle");
     }
