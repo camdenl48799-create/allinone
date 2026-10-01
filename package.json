@@ -3,41 +3,38 @@
   "version": "0.2.0",
   "private": true,
   "description": "ALLINONE — One AI. Every project.",
-  "main": "desktop/main.cjs",
+  "main": "main.js",
   "scripts": {
+    "start": "electron .",
     "start:desktop": "electron .",
-    "build:desktop": "electron-builder",
-    "build:mobile": "npx cap sync",
-    "open:android": "npx cap open android",
-    "open:ios": "npx cap open ios"
+    "dist": "electron-builder --win nsis",
+    "build:desktop": "electron-builder --win nsis"
   },
   "devDependencies": {
     "electron": "^38.1.0",
     "electron-builder": "^26.0.12"
   },
-  "dependencies": {
-    "@capacitor/core": "^7.4.3"
-  },
   "build": {
     "appId": "com.allinone.app",
     "productName": "ALLINONE",
+    "artifactName": "ALLINONE-Setup-${version}.exe",
     "files": [
-      "index.html",
-      "desktop/**/*",
-      "capacitor.config.json",
-      "package.json"
+      "main.js",
+      "preload.js",
+      "src/**/*"
     ],
     "directories": {
-      "output": "dist/apps"
+      "output": "release"
     },
     "win": {
       "target": "nsis"
     },
-    "mac": {
-      "target": "dmg"
-    },
-    "linux": {
-      "target": "AppImage"
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ALLINONE"
     }
   }
 }
