@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace ALLINONE;
@@ -6,6 +7,7 @@ namespace ALLINONE;
 public sealed class ApiKeyService
 {
     private readonly string path;
+    private readonly object sync = new();
     private List<ApiKeyRecord> keys = [];
 
     public ApiKeyService(string dataDir)
@@ -14,57 +16,98 @@ public sealed class ApiKeyService
         Load();
     }
 
-    public IReadOnlyList<ApiKeyRecord> Keys => keys;
+    public IReadOnlyList<ApiKeyRecord> Keys
+    {
+        get { lock (sync) return keys.ToArray(); }
+    }
 
     public (ApiKeyRecord Record, string Secret) Create(string name)
     {
         var secret = "allinone_sk_" + Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
         var record = new ApiKeyRecord(
             Guid.NewGuid().ToString("N"),
-            string.IsNullOrWhiteSpace(name) ? "My ALLINONE key" : name.Trim(),
+            SanitizeName(name),
             Hash(secret),
             DateTimeOffset.UtcNow,
             null,
-            true);
-        keys.Add(record);
-        Save();
+            false);
+
+        lock (sync)
+        {
+            keys.Add(record);
+            Save();
+        }
+
         return (record, secret);
     }
 
     public bool Revoke(string id)
     {
-        var index = keys.FindIndex(k => k.Id == id);
-        if (index < 0) return false;
-        keys[index] = keys[index] with { Revoked = true };
-        Save();
-        return true;
+        lock (sync)
+        {
+            var index = keys.FindIndex(k => k.Id == id);
+            if (index < 0 || keys[index].Revoked) return false;
+            keys[index] = keys[index] with { Revoked = true };
+            Save();
+            return true;
+        }
     }
 
     public bool Validate(string secret)
     {
+        if (string.IsNullOrWhiteSpace(secret) || secret.Length > 256) return false;
         var hash = Hash(secret);
-        return keys.Any(k => k.Active && CryptographicOperations.FixedTimeEquals(Convert.FromHexString(k.SecretHash), Convert.FromHexString(hash)));
+
+        lock (sync)
+        {
+            foreach (var key in keys)
+            {
+                if (!key.Active) continue;
+                if (CryptographicOperations.FixedTimeEquals(
+                    Convert.FromHexString(key.SecretHash),
+                    Convert.FromHexString(hash)))
+                {
+                    key.LastUsedAt = DateTimeOffset.UtcNow;
+                    Save();
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
-    private static string Hash(string value)
+    private static string SanitizeName(string? name)
     {
-        var bytes = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(value));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
+        var value = string.IsNullOrWhiteSpace(name) ? "My ALLINONE key" : name.Trim();
+        return value.Length > 80 ? value[..80] : value;
     }
+
+    private static string Hash(string value) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 
     private void Load()
     {
-        try
+        lock (sync)
         {
-            if (File.Exists(path)) keys = JsonSerializer.Deserialize<List<ApiKeyRecord>>(File.ReadAllText(path)) ?? [];
+            try
+            {
+                if (!File.Exists(path)) return;
+                keys = JsonSerializer.Deserialize<List<ApiKeyRecord>>(File.ReadAllText(path)) ?? [];
+            }
+            catch
+            {
+                keys = [];
+            }
         }
-        catch { keys = []; }
     }
 
     private void Save()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(keys, new JsonSerializerOptions { WriteIndented = true }));
+        var temp = path + ".tmp";
+        File.WriteAllText(temp, JsonSerializer.Serialize(keys, new JsonSerializerOptions { WriteIndented = true }));
+        File.Move(temp, path, true);
     }
 }
 
