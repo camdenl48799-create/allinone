@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;\nusing System.Diagnostics;
+using System.Windows.Threading;
 
 namespace ALLINONE;
 
@@ -11,6 +11,7 @@ public partial class MainWindow : Window
 {
     private readonly string dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ALLINONE");
     private readonly string settingsPath;
+    private readonly ClerkAuthService clerk;
     private Settings settings = new();
     private int setupStep = 1;
     private readonly DispatcherTimer orbTimer = new() { Interval = TimeSpan.FromMilliseconds(70) };
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         settingsPath = Path.Combine(dataDir, "settings.json");
         Directory.CreateDirectory(dataDir);
+        clerk = new ClerkAuthService(dataDir);
         LoadSettings();
         ApplyTheme(settings.Theme);
         orbTimer.Tick += (_, _) => AnimateOrb();
@@ -83,8 +85,11 @@ public partial class MainWindow : Window
     {
         SetupView.Visibility = Visibility.Collapsed;
         AppView.Visibility = Visibility.Visible;
-        SettingsName.Text = settings.DisplayName;\n        AuthStatus.Text = settings.SignedIn ? $"Signed in as {settings.AccountName ?? settings.DisplayName}" : "Not signed in";
+        SettingsName.Text = settings.DisplayName;
         SettingsSafe.IsChecked = settings.SafeMode;
+        AuthStatus.Text = settings.SignedIn
+            ? $"Signed in as {settings.AccountName ?? settings.DisplayName}"
+            : (clerk.IsConfigured ? "Not signed in" : "Clerk setup required");
         AddMessage("ALLINONE", $"Ready, {settings.DisplayName}. What are we building?");
         SetOrbState("idle");
     }
@@ -94,7 +99,8 @@ public partial class MainWindow : Window
         var tag = (sender as Button)?.Tag?.ToString();
         ChatPage.Visibility = tag == "Chat" ? Visibility.Visible : Visibility.Collapsed;
         ProjectsPage.Visibility = tag == "Projects" ? Visibility.Visible : Visibility.Collapsed;
-        SettingsPage.Visibility = tag == "Settings" ? Visibility.Visible : Visibility.Collapsed;\n        AccountPage.Visibility = tag == "Account" ? Visibility.Visible : Visibility.Collapsed;
+        SettingsPage.Visibility = tag == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        AccountPage.Visibility = tag == "Account" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void Send_Click(object sender, RoutedEventArgs e) => SendPrompt();
@@ -139,12 +145,7 @@ public partial class MainWindow : Window
     private void SetOrbState(string state)
     {
         gameMode = state == "game";
-        AIOrbText.Text = state switch
-        {
-            "game" => "🎮",
-            "thinking" => "AI",
-            _ => "AI"
-        };
+        AIOrbText.Text = state == "game" ? "🎮" : "AI";
         AIOrbText.FontSize = state == "game" ? 42 : 34;
     }
 
@@ -158,13 +159,9 @@ public partial class MainWindow : Window
         AIOrbScale.ScaleY = pulse;
 
         if (gameMode && orbFrame % 8 == 0)
-        {
             AIOrbText.RenderTransform = new RotateTransform(Math.Sin(orbFrame * 0.8) * 5);
-        }
         else if (!gameMode)
-        {
             AIOrbText.RenderTransform = new RotateTransform(0);
-        }
     }
 
     private void AddMessage(string author, string text)
@@ -207,7 +204,47 @@ public partial class MainWindow : Window
         Resources["MutedBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(light ? "#626976" : "#9BA3B2"));
     }
 
-    private void GoogleSignUp_Click(object sender, RoutedEventArgs e) => StartBrowserAuth("google", true);\n\n    private void AppleSignUp_Click(object sender, RoutedEventArgs e) => StartBrowserAuth("apple", true);\n\n    private void SignIn_Click(object sender, RoutedEventArgs e) => StartBrowserAuth("account", false);\n\n    private void StartBrowserAuth(string provider, bool signUp)\n    {\n        // Production OAuth endpoints will be configured when the ALLINONE auth service is connected.\n        // The native app intentionally opens the system browser rather than embedding a login page.\n        var endpoint = Environment.GetEnvironmentVariable($"ALLINONE_{provider.ToUpperInvariant()}_AUTH_URL");\n        if (string.IsNullOrWhiteSpace(endpoint))\n        {\n            AuthStatus.Text = "Authentication service not configured yet.";\n            return;\n        }\n        try { Process.Start(new ProcessStartInfo(endpoint) { UseShellExecute = true }); AuthStatus.Text = signUp ? $"Opening {provider} sign-up in your browser…" : "Opening sign-in in your browser…"; }\n        catch { AuthStatus.Text = "Could not open the authentication browser."; }\n    }\n\n    private void SaveSettings_Click(object sender, RoutedEventArgs e)
+    private async void GoogleSignUp_Click(object sender, RoutedEventArgs e) => await BeginClerkAuthAsync("Google");
+    private async void AppleSignUp_Click(object sender, RoutedEventArgs e) => await BeginClerkAuthAsync("Apple");
+    private async void SignIn_Click(object sender, RoutedEventArgs e) => await BeginClerkAuthAsync("Clerk");
+
+    private async Task BeginClerkAuthAsync(string provider)
+    {
+        if (!clerk.IsConfigured)
+        {
+            AuthStatus.Text = "Clerk isn't configured yet. Add your Clerk frontend API URL and public OAuth client ID.";
+            return;
+        }
+
+        try
+        {
+            AuthStatus.Text = $"Opening Clerk in your browser…";
+            var user = await clerk.SignInAsync();
+            settings.SignedIn = true;
+            settings.AccountName = user?.name ?? user?.email ?? settings.DisplayName;
+            SaveSettingsToDisk();
+            AuthStatus.Text = $"Signed in as {settings.AccountName}";
+        }
+        catch (OperationCanceledException)
+        {
+            AuthStatus.Text = "Authentication was canceled.";
+        }
+        catch (Exception ex)
+        {
+            AuthStatus.Text = $"Authentication failed: {ex.Message}";
+        }
+    }
+
+    private void SignOut_Click(object sender, RoutedEventArgs e)
+    {
+        clerk.SignOut();
+        settings.SignedIn = false;
+        settings.AccountName = null;
+        SaveSettingsToDisk();
+        AuthStatus.Text = "Signed out";
+    }
+
+    private void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
         settings.DisplayName = string.IsNullOrWhiteSpace(SettingsName.Text) ? "User" : SettingsName.Text.Trim();
         settings.SafeMode = SettingsSafe.IsChecked == true;
