@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly ClerkAuthService clerk;
     private readonly UpdateService updater = new();
     private readonly SearchInOne searchInOne = new();
+    private readonly ModelService modelService = new();
     private Settings settings = new();
     private int setupStep = 1;
     private readonly DispatcherTimer orbTimer = new() { Interval = TimeSpan.FromMilliseconds(70) };
@@ -85,7 +86,7 @@ public partial class MainWindow : Window
         AuthStatus.Text = settings.SignedIn ? $"Signed in as {settings.AccountName ?? settings.DisplayName}" : (clerk.IsConfigured ? "Not signed in" : "Clerk setup required");
         RestoreHistory();
         if (Messages.Children.Count == 0) AddMessage("ALLINONE", $"Ready, {settings.DisplayName}. What are we building?");
-        SetOrbState("idle"); StatusText.Text = "● Auto-updater active";
+        SetOrbState("idle"); StatusText.Text = modelService.IsConfigured ? $"● Model: {modelService.ModelId}" : "● Model needs API key";
     }
 
     private void Nav_Click(object sender, RoutedEventArgs e)
@@ -203,21 +204,41 @@ public partial class MainWindow : Window
         var shouldSearch = searchMode || hasSearchMention || hasWebsiteMention || hasYouTubeMention ||
                            prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase) ||
                            prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase);
+        string? searchQuery = null;
         if (shouldSearch)
         {
-            var query = Regex.Replace(prompt, @"@(SearchInOne|Website|YouTube)\b", "", RegexOptions.IgnoreCase).Trim();
+            searchQuery = Regex.Replace(prompt, @"@(SearchInOne|Website|YouTube)\b", "", RegexOptions.IgnoreCase).Trim();
             if (prompt.StartsWith("research ", StringComparison.OrdinalIgnoreCase))
-                query = query["research ".Length..].Trim();
+                searchQuery = searchQuery["research ".Length..].Trim();
             else if (prompt.StartsWith("search ", StringComparison.OrdinalIgnoreCase))
-                query = query["search ".Length..].Trim();
+                searchQuery = searchQuery["search ".Length..].Trim();
 
-            if (string.IsNullOrWhiteSpace(query))
-                query = prompt;
+            if (string.IsNullOrWhiteSpace(searchQuery))
+                searchQuery = prompt;
 
-            await RunSearchAsync(query);
+            await RunSearchAsync(searchQuery);
         }
 
-        AddMessage("ALLINONE", LocalFallback(prompt, shouldSearch));
+        try
+        {
+            string? searchContext = null;
+            if (shouldSearch && searchQuery is not null)
+                searchContext = await BuildSearchContextAsync(searchQuery);
+
+            var role = prompt.Contains("@CodeInOne", StringComparison.OrdinalIgnoreCase)
+                ? "code"
+                : gameMode ? "game"
+                : shouldSearch ? "research" : "general";
+
+            StatusText.Text = $"● {modelService.ModelId} thinking…";
+            var answer = await modelService.GenerateAsync(prompt, searchContext, role);
+            AddMessage("ALLINONE", answer);
+        }
+        catch (Exception ex)
+        {
+            AddMessage("ALLINONE", $"The model could not complete that request: {ex.Message}");
+        }
+
         SetOrbState(gameMode ? "game" : "idle");
         SaveHistory();
     }
@@ -263,6 +284,15 @@ public partial class MainWindow : Window
     private static void OpenUrl(string url)
     {
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
+    }
+
+    private async Task<string?> BuildSearchContextAsync(string query)
+    {
+        var results = await searchInOne.SearchAsync(query);
+        if (results.Count == 0) return null;
+
+        return string.Join("\n", results.Select((r, i) =>
+            $"[{i + 1}] {r.Title}\nURL: {r.Url}"));
     }
 
     private async Task CheckForUpdatesAsync()
