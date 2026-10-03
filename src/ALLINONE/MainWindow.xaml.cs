@@ -613,7 +613,8 @@ public partial class MainWindow : Window
         if (!string.IsNullOrWhiteSpace(projectContext))
             systemPrompt += "\n\nPROJECT CONTEXT:\n" + projectContext;
 
-        AddMessage("Local Model", "Generating with the configured local model…");
+        StatusText.Text = $"● Generating · {config.Model}";
+
         var response = await localInference.GenerateAsync(
             config,
             currentChat?.Messages ?? [],
