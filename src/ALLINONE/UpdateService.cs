@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
-using System.IO;
 
 namespace ALLINONE;
 
@@ -26,7 +25,8 @@ public sealed class UpdateService
     private static HttpClient CreateClient()
     {
         var client = new HttpClient();
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("ALLINONE-Updater/1.2");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("ALLINONE-Updater/1.3");
+        client.Timeout = TimeSpan.FromSeconds(30);
         return client;
     }
 
@@ -35,15 +35,26 @@ public sealed class UpdateService
         if (!ShouldCheckAutomatically())
             return null;
 
+        MarkChecked();
+        return await CheckLatestAsync(cancellationToken);
+    }
+
+    public Task<UpdateInfo?> CheckNowAsync(CancellationToken cancellationToken = default) =>
+        CheckLatestAsync(cancellationToken);
+
+    private async Task<UpdateInfo?> CheckLatestAsync(CancellationToken cancellationToken)
+    {
         try
         {
-            MarkChecked();
             using var response = await Http.GetAsync(
                 $"https://api.github.com/repos/{Owner}/{Repo}/releases/latest",
                 cancellationToken);
 
             response.EnsureSuccessStatusCode();
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+
+            await using var stream =
+                await response.Content.ReadAsStreamAsync(cancellationToken);
+
             var release = await JsonSerializer.DeserializeAsync<GitHubRelease>(
                 stream,
                 cancellationToken: cancellationToken);
@@ -57,6 +68,7 @@ public sealed class UpdateService
 
             var zip = release.assets?.FirstOrDefault(a =>
                 a.name.Equals("ALLINONE-win-x64.zip", StringComparison.OrdinalIgnoreCase));
+
             var checksum = release.assets?.FirstOrDefault(a =>
                 a.name.Equals("checksums.txt", StringComparison.OrdinalIgnoreCase));
 
@@ -124,9 +136,9 @@ public sealed class UpdateService
             if (string.IsNullOrWhiteSpace(targetDir))
                 return false;
 
-            // Use a plain cmd script — no PowerShell.
             var updateScript = Path.Combine(temp, "apply-update.cmd");
             var pid = Environment.ProcessId.ToString();
+
             var script =
                 "@echo off" + Environment.NewLine +
                 "setlocal" + Environment.NewLine +
@@ -144,10 +156,13 @@ public sealed class UpdateService
                 Environment.NewLine +
                 "timeout /T 1 /NOBREAK >NUL" + Environment.NewLine +
                 "xcopy /E /Y /Q /I \"%PACKAGE%\\*\" \"%TARGET%\\\" >NUL" + Environment.NewLine +
-                "start \"\" \"%EXE%\"" + Environment.NewLine +
+                "start \"\" \"%EXE%\""+ Environment.NewLine +
                 "exit /B 0" + Environment.NewLine;
 
-            await File.WriteAllTextAsync(updateScript, script, cancellationToken);
+            await File.WriteAllTextAsync(
+                updateScript,
+                script,
+                cancellationToken);
 
             var psi = new ProcessStartInfo
             {
@@ -177,9 +192,8 @@ public sealed class UpdateService
             var state = JsonSerializer.Deserialize<UpdateState>(
                 File.ReadAllText(statePath));
 
-            if (state is null)
-                return true;
-            return DateTime.UtcNow - state.LastCheckedUtc >= AutomaticCheckInterval;
+            return state is null ||
+                   DateTime.UtcNow - state.LastCheckedUtc >= AutomaticCheckInterval;
         }
         catch
         {
@@ -204,7 +218,7 @@ public sealed class UpdateService
         }
         catch
         {
-            // A failed state write should never stop ALLINONE from running.
+            // Update state should never stop the app.
         }
     }
 
@@ -220,8 +234,10 @@ public sealed class UpdateService
 
         response.EnsureSuccessStatusCode();
 
-        await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
+        await using var input =
+            await response.Content.ReadAsStreamAsync(cancellationToken);
         await using var output = File.Create(path);
+
         await input.CopyToAsync(output, cancellationToken);
     }
 
@@ -229,10 +245,14 @@ public sealed class UpdateService
     {
         foreach (var line in text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
-            var parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var parts = line.Trim().Split(
+                ' ',
+                StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length >= 2 &&
-                parts[^1].TrimStart('*').Equals(fileName, StringComparison.OrdinalIgnoreCase))
+                parts[^1].TrimStart('*').Equals(
+                    fileName,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return parts[0];
             }
@@ -244,6 +264,7 @@ public sealed class UpdateService
     private static Version ParseVersion(string tag)
     {
         var clean = tag.Trim().TrimStart('v', 'V');
+
         return Version.TryParse(clean, out var version)
             ? version
             : new Version(0, 0, 0);
