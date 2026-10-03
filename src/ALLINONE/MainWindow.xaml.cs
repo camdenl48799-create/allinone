@@ -494,7 +494,7 @@ public partial class MainWindow : Window
 
     private static string? ExtractMath(string prompt)
     {
-        var value = System.Text.RegularExpressions.Regex.Replace(prompt.ToLowerInvariant(), @"^(what is|calculate|compute|evaluate|solve)s+", "").Trim().TrimEnd('?', '=');
+        var value = System.Text.RegularExpressions.Regex.Replace(prompt.ToLowerInvariant(), @"^(what is|calculate|compute|evaluate|solve)\\s+", "").Trim().TrimEnd('?', '=');
         return System.Text.RegularExpressions.Regex.IsMatch(value, @"^[0-9+\\-*/%^().\\s]+$") && value.Any(char.IsDigit) && value.Any(c => "+-*/%^".Contains(c)) ? value : null;
     }
 
