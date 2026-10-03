@@ -9,7 +9,7 @@
   <Style TargetType="TextBox"><Setter Property="Foreground" Value="{StaticResource TextBrush}"/><Setter Property="Background" Value="{StaticResource InputBrush}"/><Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="13,10"/><Setter Property="FontSize" Value="14"/></Style>
   <Style TargetType="ComboBox"><Setter Property="Foreground" Value="{StaticResource TextBrush}"/><Setter Property="Background" Value="{StaticResource Panel2Brush}"/><Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/><Setter Property="Padding" Value="8,6"/></Style>
  </Window.Resources>
-
+ <Grid>
  <Grid x:Name="SetupView" Visibility="Collapsed" Background="{StaticResource BackgroundBrush}">
   <Border Width="760" Padding="46" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="24" HorizontalAlignment="Center" VerticalAlignment="Center">
    <StackPanel>
@@ -95,5 +95,6 @@
     <Border Background="{StaticResource.PanelBrush}" BorderBrush="{StaticResource.BorderBrush}" BorderThickness="1" CornerRadius="16" Padding="24"><StackPanel><Button Content="Continue with Google" Height="48" Click="GoogleSignUp_Click" Margin="0,0,0,10"/><Button Content="Continue with Apple  " Height="48" Click="AppleSignUp_Click" Margin="0,0,0,18"/><Button Content="Sign in" Width="130" HorizontalAlignment="Center" Click="SignIn_Click"/><Button Content="Sign out" Width="130" HorizontalAlignment="Center" Margin="0,10,0,0" Click="SignOut_Click"/><TextBlock x:Name="AuthStatus" Text="Not signed in" Foreground="{StaticResource MutedBrush}" Margin="0,18,0,0"/></StackPanel></Border>
    </StackPanel></ScrollViewer></Grid>
   </Grid>
+ </Grid>
  </Grid>
 </Window>
