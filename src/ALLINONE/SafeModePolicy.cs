@@ -10,6 +10,7 @@ public static class SafeModePolicy
         "self harm",
         "self-harm",
         "selfharm",
+        "hurt myself",
         "suicide"
     ];
 
