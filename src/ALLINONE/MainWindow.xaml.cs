@@ -23,7 +23,6 @@ public partial class MainWindow : Window
     private readonly HttpClient web = new() { Timeout = TimeSpan.FromSeconds(15) };
     private Settings settings = new();
     private int setupStep = 1;
-    private bool gameMode;
     private ProjectInfo? currentProject;
 
     public MainWindow()
