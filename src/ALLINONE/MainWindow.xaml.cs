@@ -163,6 +163,12 @@ public partial class MainWindow : Window
 
         try
         {
+            if (settings.SafeMode && SafeModePolicy.IsBlocked(raw))
+            {
+                AddMessage("ALLINONE Safety", "Safe Mode blocked this request before any tool, website, file, search, or model route was started.");
+                return;
+            }
+
             var (target, text) = MentionRouter.Parse(raw);
             switch (target)
             {
@@ -185,12 +191,6 @@ public partial class MainWindow : Window
 
     private async Task RunLocalCoreAsync(string prompt)
     {
-        if (settings.SafeMode && ContainsUnsafeRequest(prompt))
-        {
-            AddMessage("ALLINONE Safety", "Safe Mode blocked this request. Try a safe, age-appropriate version of the task.");
-            return;
-        }
-
         var expression = ExtractMath(prompt);
         if (expression is not null)
         {
@@ -487,11 +487,6 @@ public partial class MainWindow : Window
     {
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
     }
-
-    private static bool ContainsUnsafeRequest(string prompt) =>
-        prompt.Contains("how to hurt", StringComparison.OrdinalIgnoreCase)
-        || prompt.Contains("self harm", StringComparison.OrdinalIgnoreCase)
-        || prompt.Contains("suicide", StringComparison.OrdinalIgnoreCase);
 
     private static string? ExtractMath(string prompt)
     {
