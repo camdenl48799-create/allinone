@@ -117,6 +117,37 @@ public partial class MainWindow : Window
         AccountPage.Visibility = tag == "Account" ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private async void WebSearch_Click(object sender, RoutedEventArgs e)
+    {
+        var query = PromptBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            AddMessage("SearchInOne", "Enter something to search for first.");
+            return;
+        }
+
+        PromptBox.Clear();
+        SetBusy(true);
+        try
+        {
+            if (settings.SafeMode && SafeModePolicy.IsBlocked(query))
+            {
+                AddMessage("ALLINONE Safety", "Safe Mode blocked this search before any internet request was made.");
+                return;
+            }
+
+            await RunSearchAsync(query);
+        }
+        catch (Exception ex)
+        {
+            AddMessage("SearchInOne", $"Live web search failed: {ex.Message}");
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
     private void PromptBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         var text = PromptBox.Text;
