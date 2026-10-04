@@ -1,0 +1,39 @@
+name: Build ALLINONE (Windows)
+
+on:
+  push:
+    branches: ["main", "improve/**"]
+    paths:
+      - "src/ALLINONE/**"
+      - "tests/ALLINONE.CoreTests/**"
+      - ".github/workflows/build-windows.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "src/ALLINONE/**"
+      - "tests/ALLINONE.CoreTests/**"
+      - ".github/workflows/build-windows.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tests/ALLINONE.CoreTests/ALLINONE.CoreTests.csproj
+
+      - name: Build
+        run: dotnet build src/ALLINONE/ALLINONE.csproj --configuration Release --no-restore
+
+      - name: Safety regression test
+        run: dotnet run --project tests/ALLINONE.CoreTests/ALLINONE.CoreTests.csproj --configuration Release --no-restore
