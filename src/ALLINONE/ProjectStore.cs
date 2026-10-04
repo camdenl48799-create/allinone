@@ -49,6 +49,23 @@ public sealed class ProjectStore
         if (!files.Contains(path, StringComparer.OrdinalIgnoreCase)) files.Add(path);
         Save(project with { Files = files, UpdatedUtc = DateTimeOffset.UtcNow });
     }
+
+    public string CreateFile(ProjectInfo project, string fileName, string content)
+    {
+        var safeName = Path.GetFileName(fileName.Trim());
+        if (string.IsNullOrWhiteSpace(safeName) || safeName is "." or "..")
+            throw new ArgumentException("Enter a valid filename.");
+
+        var projectDir = Path.Combine(root, project.Id, "Files");
+        Directory.CreateDirectory(projectDir);
+        var path = Path.Combine(projectDir, safeName);
+        File.WriteAllText(path, content ?? string.Empty);
+
+        var files = project.Files.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (!files.Contains(path, StringComparer.OrdinalIgnoreCase)) files.Add(path);
+        Save(project with { Files = files, UpdatedUtc = DateTimeOffset.UtcNow });
+        return path;
+    }
 }
 
 public sealed record ProjectInfo(string Id, string Name, DateTimeOffset UpdatedUtc, IReadOnlyList<string> Files);
