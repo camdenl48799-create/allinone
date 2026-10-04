@@ -29,10 +29,13 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore
+      - name: Restore application
+        run: dotnet restore src/ALLINONE/ALLINONE.csproj
+
+      - name: Restore regression tests
         run: dotnet restore tests/ALLINONE.CoreTests/ALLINONE.CoreTests.csproj
 
-      - name: Build
+      - name: Build application
         run: dotnet build src/ALLINONE/ALLINONE.csproj --configuration Release --no-restore
 
       - name: Safety regression test
