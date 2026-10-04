@@ -8,6 +8,6 @@
     <SelfContained>true</SelfContained>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/ALLINONE/ALLINONE.csproj" />
+    <Compile Include="../../src/ALLINONE/SafeModePolicy.cs" Link="SafeModePolicy.cs" />
   </ItemGroup>
 </Project>
