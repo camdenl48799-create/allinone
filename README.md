@@ -9,7 +9,8 @@ A local-first AI desktop workspace by NOT USED INC.
 - Chat, Projects, and Settings
 - Electron security defaults
 - Demo Mode while the local inference engine is being built
-- Windows NSIS installer configuration
+- Windows single-file publishing configuration
+- Windows CI build and Safe Mode regression checks
 
 ## Run
 npm install
