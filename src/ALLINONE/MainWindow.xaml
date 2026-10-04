@@ -71,9 +71,12 @@
     <Grid Grid.Row="2">
      <ListBox x:Name="MentionList" Visibility="Collapsed" MaxHeight="220" HorizontalAlignment="Left" Width="360" Margin="0,0,0,64" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" SelectionChanged="MentionList_SelectionChanged" DisplayMemberPath="Label"/>
      <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="16" Padding="8">
-      <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="92"/></Grid.ColumnDefinitions>
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="190"/></Grid.ColumnDefinitions>
        <TextBox x:Name="PromptBox" Grid.Column="0" MinHeight="54" BorderThickness="0" Background="Transparent" AcceptsReturn="True" TextWrapping="Wrap" TextChanged="PromptBox_TextChanged" KeyDown="PromptBox_KeyDown"/>
-       <Button Grid.Column="1" Content="Send  →" Background="{StaticResource AccentBrush}" Click="Send_Click" ToolTip="Send message (Enter with a single-line prompt)"/>
+       <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+        <Button Content="Web Search" Width="92" Background="{StaticResource Panel2Brush}" Click="WebSearch_Click" ToolTip="Search the live internet with SearchInOne" Margin="0,0,8,0"/>
+        <Button Content="Send  →" Width="82" Background="{StaticResource AccentBrush}" Click="Send_Click" ToolTip="Send message (Enter with a single-line prompt)"/>
+       </StackPanel>
       </Grid>
      </Border>
     </Grid>
