@@ -8,6 +8,15 @@
   <Style x:Key="NavButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderBrush" Value="Transparent"/><Setter Property="Padding" Value="12,11"/></Style>
   <Style TargetType="TextBox"><Setter Property="Foreground" Value="{StaticResource TextBrush}"/><Setter Property="Background" Value="{StaticResource InputBrush}"/><Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="13,10"/><Setter Property="FontSize" Value="14"/></Style>
   <Style TargetType="ComboBox"><Setter Property="Foreground" Value="{StaticResource TextBrush}"/><Setter Property="Background" Value="{StaticResource Panel2Brush}"/><Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/><Setter Property="Padding" Value="8,6"/></Style>
+  <Style TargetType="ComboBoxItem">
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding Available}" Value="False">
+        <Setter Property="IsEnabled" Value="False"/>
+        <Setter Property="Opacity" Value="0.52"/>
+      </DataTrigger>
+    </Style.Triggers>
+  </Style>
  </Window.Resources>
  <Grid>
  <Grid x:Name="SetupView" Visibility="Collapsed" Background="{StaticResource BackgroundBrush}">
@@ -30,13 +39,13 @@
   <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0" Padding="16">
    <DockPanel>
     <StackPanel DockPanel.Dock="Top">
-     <TextBlock Text="● ALLINONE" FontSize="24" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+     <TextBlock Text="● ALLINONE" FontSize="24" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" ToolTip="ALLINONE desktop workspace"/>
      <TextBlock Text="ONE AI. EVERY PROJECT." FontSize="10" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,25"/>
-     <Button Style="{StaticResource NavButton}" Content="  ✦   Chat" Tag="Chat" Click="Nav_Click"/>
-     <Button Style="{StaticResource NavButton}" Content="  ◈   Projects" Tag="Projects" Click="Nav_Click"/>
-     <Button Style="{StaticResource NavButton}" Content="  ◇   Files" Tag="Files" Click="Nav_Click"/>
-     <Button Style="{StaticResource NavButton}" Content="  ⚙   Settings" Tag="Settings" Click="Nav_Click"/>
-     <Button Style="{StaticResource NavButton}" Content="  ◉   Account" Tag="Account" Click="Nav_Click"/>
+     <Button Style="{StaticResource NavButton}" Content="  ✦   Chat" Tag="Chat" Click="Nav_Click" ToolTip="Open your AI conversation"/>
+     <Button Style="{StaticResource NavButton}" Content="  ◈   Projects" Tag="Projects" Click="Nav_Click" ToolTip="Manage isolated project contexts"/>
+     <Button Style="{StaticResource NavButton}" Content="  ◇   Files" Tag="Files" Click="Nav_Click" ToolTip="Attach and inspect local files"/>
+     <Button Style="{StaticResource NavButton}" Content="  ⚙   Settings" Tag="Settings" Click="Nav_Click" ToolTip="Configure profile, safety, theme, and models"/>
+     <Button Style="{StaticResource NavButton}" Content="  ◉   Account" Tag="Account" Click="Nav_Click" ToolTip="Manage your Clerk account session"/>
     </StackPanel>
     <Border DockPanel.Dock="Bottom" Background="{StaticResource Panel2Brush}" CornerRadius="12" Padding="12">
      <StackPanel><TextBlock Text="ENGINE" FontSize="10" Foreground="{StaticResource MutedBrush}"/><TextBlock x:Name="StatusText" Text="● Local Core" Foreground="{StaticResource AccentBrush}" Margin="0,4,0,0"/><TextBlock x:Name="ProjectStatus" Text="No project selected" FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/></StackPanel>
@@ -48,10 +57,10 @@
    <Grid x:Name="ChatPage">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <Grid>
-     <StackPanel><TextBlock Text="AI Chat" FontSize="31" FontWeight="SemiBold"/><TextBlock Text="Chat, search, code, math, files, and project context." Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0"/></StackPanel>
+     <StackPanel><TextBlock Text="AI Chat" FontSize="31" FontWeight="SemiBold"/><TextBlock Text="Native Windows workspace • local-first • safe by default." Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0"/><TextBlock Text="Chat, search, code, math, files, and project context." FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,3,0,0"/></StackPanel>
      <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
       <TextBlock Text="Model" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" Margin="0,0,8,0"/>
-      <ComboBox x:Name="ModelSelector" Width="210" SelectionChanged="ModelSelector_SelectionChanged" DisplayMemberPath="DisplayName"/>
+      <ComboBox x:Name="ModelSelector" Width="210" SelectionChanged="ModelSelector_SelectionChanged" DisplayMemberPath="DisplayName" ToolTip="Choose an available model. Roadmap-only models remain visible but disabled."/>
      </StackPanel>
     </Grid>
     <Grid Grid.Row="1">
@@ -64,7 +73,7 @@
      <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="16" Padding="8">
       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="92"/></Grid.ColumnDefinitions>
        <TextBox x:Name="PromptBox" Grid.Column="0" MinHeight="54" BorderThickness="0" Background="Transparent" AcceptsReturn="True" TextWrapping="Wrap" TextChanged="PromptBox_TextChanged" KeyDown="PromptBox_KeyDown"/>
-       <Button Grid.Column="1" Content="Send  →" Background="{StaticResource AccentBrush}" Click="Send_Click"/>
+       <Button Grid.Column="1" Content="Send  →" Background="{StaticResource AccentBrush}" Click="Send_Click" ToolTip="Send message (Enter with a single-line prompt)"/>
       </Grid>
      </Border>
     </Grid>
