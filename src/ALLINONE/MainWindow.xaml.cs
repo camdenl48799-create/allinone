@@ -163,6 +163,12 @@ public partial class MainWindow : Window
 
         try
         {
+            if (settings.SafeMode && ContainsUnsafeRequest(raw))
+            {
+                AddMessage("ALLINONE Safety", "Safe Mode blocked this request before any tool, website, file, search, or model route was started.");
+                return;
+            }
+
             var (target, text) = MentionRouter.Parse(raw);
             switch (target)
             {
