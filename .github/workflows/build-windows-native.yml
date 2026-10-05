@@ -1,19 +1,39 @@
 name: Build ALLINONE Native Windows
+
 on:
   workflow_dispatch:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/ALLINONE/**"
+      - "ALLINONE.sln"
+      - ".github/workflows/build-windows-native.yml"
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore src/ALLINONE/ALLINONE.csproj
+
+      - name: Build
+        run: dotnet build src/ALLINONE/ALLINONE.csproj -c Release --no-restore
+
       - name: Publish native x64 EXE
         run: dotnet publish src/ALLINONE/ALLINONE.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
           name: ALLINONE-Windows-x64
           path: src/ALLINONE/bin/Release/net10.0-windows/win-x64/publish/ALLINONE.exe
