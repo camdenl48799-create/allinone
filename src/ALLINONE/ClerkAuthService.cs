@@ -1,5 +1,7 @@
-using System.Net;
+using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
+using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -49,13 +51,13 @@ public sealed class ClerkAuthService
             ["code_challenge_method"] = "S256"
         };
 
-        // Clerk's OAuth authorization screen handles the enabled social connections.
-        // The optional provider value is reserved for a provider-specific flow when supported by the configured instance.
-                using var listener = new LocalCallbackListener(new Uri(redirectUri));
+        // Clerk's OAuth screen handles social connections.
+        // The optional provider value is reserved for a provider-specific flow when supported.
+        using var listener = new LocalCallbackListener(new Uri(redirectUri));
         var url = authorizeUrl + "?" + string.Join("&", query.Select(kvp =>
             $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
 
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         var callback = await listener.WaitAsync(TimeSpan.FromMinutes(10), cancellationToken);
 
         if (!string.Equals(callback.State, state, StringComparison.Ordinal))
@@ -147,7 +149,7 @@ public sealed class ClerkAuthService
         public LocalCallbackListener(Uri redirectUri)
         {
             this.redirectUri = redirectUri;
-            listener = new TcpListener(System.Net.IPAddress.Loopback, redirectUri.Port);
+            listener = new TcpListener(IPAddress.Loopback, redirectUri.Port);
             listener.Start();
         }
 

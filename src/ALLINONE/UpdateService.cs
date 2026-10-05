@@ -1,3 +1,4 @@
+using System.IO;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http;
@@ -102,26 +103,38 @@ public sealed class UpdateService
             if (string.IsNullOrWhiteSpace(targetDir))
                 return false;
 
-            var updateScript = Path.Combine(temp, "apply-update.ps1");
-            var script = @"
-param([int]$PidToWait, [string]$PackageDir, [string]$TargetDir, [string]$ExePath)
-try {
-  Wait-Process -Id $PidToWait -Timeout 60 -ErrorAction SilentlyContinue
-  Start-Sleep -Milliseconds 700
-  Copy-Item -Path (Join-Path $PackageDir '*') -Destination $TargetDir -Recurse -Force
-  Start-Process -FilePath $ExePath
-} catch {
-  exit 1
-}
-";
+            // Use a plain cmd script — no PowerShell.
+            var updateScript = Path.Combine(temp, "apply-update.cmd");
+            var pid = Environment.ProcessId.ToString();
+            var script =
+                "@echo off" + Environment.NewLine +
+                "setlocal DisableDelayedExpansion" + Environment.NewLine +
+                "set PID=" + pid + Environment.NewLine +
+                "set \"PACKAGE=" + extractPath.Replace("%", "%%") + "\"" + Environment.NewLine +
+                "set \"TARGET=" + targetDir.Replace("%", "%%") + "\"" + Environment.NewLine +
+                "set \"EXE=" + currentExe.Replace("%", "%%") + "\"" + Environment.NewLine +
+                Environment.NewLine +
+                ":wait" + Environment.NewLine +
+                "tasklist /FI \"PID eq %PID%\" 2>NUL | find /I \"%PID%\" >NUL" + Environment.NewLine +
+                "if %ERRORLEVEL%==0 (" + Environment.NewLine +
+                "  timeout /T 1 /NOBREAK >NUL" + Environment.NewLine +
+                "  goto wait" + Environment.NewLine +
+                ")" + Environment.NewLine +
+                Environment.NewLine +
+                "timeout /T 1 /NOBREAK >NUL" + Environment.NewLine +
+                "xcopy /E /Y /Q /I \"%PACKAGE%\\*\" \"%TARGET%\\\" >NUL" + Environment.NewLine +
+                "start \"\" \"%EXE%\"" + Environment.NewLine +
+                "exit /B 0" + Environment.NewLine;
+
             await File.WriteAllTextAsync(updateScript, script, cancellationToken);
 
             var psi = new ProcessStartInfo
             {
-                FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{updateScript}\" -PidToWait {Environment.ProcessId} -PackageDir \"{extractPath}\" -TargetDir \"{targetDir}\" -ExePath \"{currentExe}\"",
+                FileName = "cmd.exe",
+                Arguments = "/C \"" + updateScript + "\"",
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                WorkingDirectory = temp
             };
 
             Process.Start(psi);
@@ -139,10 +152,18 @@ try {
         {
             if (!File.Exists(statePath))
                 return true;
-            var state = JsonSerializer.Deserialize<UpdateState>(File.ReadAllText(statePath));
-            return state?.LastCheckedUtc is null || DateTime.UtcNow - state.LastCheckedUtc.Value >= AutomaticCheckInterval;
+
+            var state = JsonSerializer.Deserialize<UpdateState>(
+                File.ReadAllText(statePath));
+
+            if (state is null)
+                return true;
+            return DateTime.UtcNow - state.LastCheckedUtc >= AutomaticCheckInterval;
         }
-        catch { return true; }
+        catch
+        {
+            return true;
+        }
     }
 
     private void MarkChecked()

@@ -4,6 +4,7 @@ ALLINONE now has a native WPF/.NET 10 Windows foundation.
 
 - No Electron runtime.
 - The application does not launch PowerShell.
+- Updates are applied with a plain `cmd` script (no PowerShell).
 - First launch opens a setup wizard.
 - Settings live in the user's local application-data folder.
 - GitHub Actions publishes a self-contained Windows x64 executable.
