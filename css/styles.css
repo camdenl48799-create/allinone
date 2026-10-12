@@ -531,3 +531,141 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ============================================================
+   ALLINONE visual refresh — charcoal surfaces + signature red
+   Keeps existing selectors and behavior; presentation only.
+   ============================================================ */
+:root {
+  color-scheme: dark;
+  --red: #e01e2b;
+  --red-2: #ff5360;
+  --red-dark: #a80f19;
+  --bg: #101114;
+  --surface: #191a1f;
+  --surface-2: #24252c;
+  --text: #f5f5f7;
+  --muted: #a0a2ad;
+  --border: #303139;
+  --shadow: 0 12px 32px rgba(0,0,0,.22);
+  --shadow-modal: 0 28px 90px rgba(0,0,0,.65);
+  --focus: 0 0 0 3px rgba(224,30,43,.34);
+}
+@media (prefers-color-scheme: light) {
+  :root { color-scheme: dark; }
+}
+html { background: var(--bg); }
+body {
+  background:
+    radial-gradient(ellipse at 50% -18%, rgba(224,30,43,.13), transparent 42%),
+    var(--bg);
+  color: var(--text);
+}
+.app {
+  max-width: 1040px;
+  background: linear-gradient(180deg, rgba(255,255,255,.018), transparent 28%);
+  border-left: 1px solid rgba(255,255,255,.025);
+  border-right: 1px solid rgba(255,255,255,.025);
+}
+.topbar {
+  position: relative;
+  background: rgba(25,26,31,.92);
+  border-bottom-color: rgba(255,255,255,.075);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  padding-left: clamp(14px, 3vw, 28px);
+  padding-right: clamp(14px, 3vw, 28px);
+}
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  padding: 2px;
+  background: linear-gradient(145deg, rgba(255,83,96,.22), rgba(224,30,43,.04));
+  filter: drop-shadow(0 5px 15px rgba(224,30,43,.24));
+}
+.brand-text h1 { font-size: 18px; letter-spacing: -.25px; }
+.brand-sub { letter-spacing: 1px; font-size: 10px; }
+.icon-btn { border: 1px solid transparent; }
+.icon-btn:hover { border-color: var(--border); background: var(--surface-2); }
+.chat {
+  padding: clamp(18px, 4vw, 32px) clamp(14px, 4vw, 34px) 12px;
+  gap: 16px;
+}
+.msg .avatar { width: 32px; height: 32px; }
+.msg .bubble {
+  padding: 13px 16px;
+  border-radius: 18px;
+  line-height: 1.62;
+  font-size: 15px;
+}
+.msg.ai .bubble {
+  background: linear-gradient(145deg, #1c1d23, #191a1f);
+  border-color: #303139;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+}
+.msg.user .bubble {
+  background: linear-gradient(135deg, #ef2937, #b81220);
+  box-shadow: 0 7px 22px rgba(224,30,43,.18);
+}
+.msg.system .bubble { background: rgba(224,30,43,.09); }
+.chips {
+  padding: 8px clamp(14px, 4vw, 34px) 12px;
+  gap: 9px;
+}
+.chip {
+  background: #191a1f;
+  border-color: #34353e;
+  padding: 9px 14px;
+}
+.chip:hover { background: rgba(224,30,43,.10); }
+.composer {
+  gap: 10px;
+  padding: 14px clamp(14px, 4vw, 34px) calc(16px + env(safe-area-inset-bottom));
+  background: rgba(25,26,31,.96);
+  border-top-color: rgba(255,255,255,.075);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+.composer input {
+  min-height: 50px;
+  background: #111216;
+  border-color: #373840;
+  border-radius: 16px;
+  padding: 14px 17px;
+}
+.composer input::placeholder { color: #858793; }
+.send-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  box-shadow: 0 7px 20px rgba(224,30,43,.24);
+}
+.modal {
+  border: 1px solid #373840;
+  background: linear-gradient(155deg, #202127, #18191e 72%);
+}
+.field input[type="text"], .field select {
+  background: #111216;
+  border-color: #373840;
+}
+.btn:not(.primary) { background: #22232a; border-color: #3a3b44; }
+.btn:not(.primary):hover { background: rgba(224,30,43,.10); }
+.suggestion { background: #202127; }
+.toast { border: 1px solid rgba(255,255,255,.10); }
+button:disabled { cursor: not-allowed; opacity: .55; }
+@media (min-width: 760px) {
+  .topbar { min-height: 76px; }
+  .brand-text h1 { font-size: 19px; }
+  .chat { gap: 18px; }
+}
+@media (max-width: 520px) {
+  .topbar { padding-left: 14px; padding-right: 14px; }
+  .brand { gap: 10px; }
+  .logo { width: 40px; height: 40px; }
+  .brand-sub { font-size: 9px; letter-spacing: .7px; }
+  .msg .bubble { padding: 11px 13px; }
+  .composer input { min-height: 48px; }
+  .send-btn { width: 46px; height: 46px; border-radius: 14px; }
+}
