@@ -34,7 +34,7 @@ Use the website's Clerk application. The existing `CLERK-AUTH.md` describes the 
 
 ## Important next steps
 
-1. Add website Clerk sign-in to the website/workspace and obtain a session token with the Clerk frontend SDK.
+1. Configure the website Clerk sign-in scaffold using `CLERK-WEBSITE-SETUP.md` and obtain a session token with the Clerk frontend SDK.
 2. Configure the environment variables above without committing secret values.
 3. In Stripe test mode, create a webhook endpoint for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed`.
 4. Test checkout and portal flows with Stripe's test payment details. Do not use a real card for testing.
