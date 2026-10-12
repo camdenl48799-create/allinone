@@ -15,6 +15,8 @@ public partial class MainWindow : Window
 {
     private readonly string dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ALLINONE");
     private readonly string settingsPath;
+    private readonly string chatHistoryPath;
+    private readonly List<ChatEntry> chatHistory = new();
     private readonly ClerkAuthService clerk;
     private readonly UpdateService updater = new();
     private readonly SearchInOne searchInOne = new();
@@ -30,10 +32,12 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         settingsPath = Path.Combine(dataDir, "settings.json");
+        chatHistoryPath = Path.Combine(dataDir, "chat-history.json");
         Directory.CreateDirectory(dataDir);
         clerk = new ClerkAuthService(dataDir);
         projects = new ProjectStore(dataDir);
         LoadSettings();
+        LoadChatHistory();
         ApplyTheme(settings.Theme);
         ModelSelector.ItemsSource = ModelCatalog.All;
         ModelSelector.SelectedItem = ModelCatalog.Get(settings.SelectedModel);
@@ -93,6 +97,41 @@ public partial class MainWindow : Window
     {
         if (setupStep > 1) { setupStep--; RenderSetup(); }
     }
+
+    private void LoadChatHistory()
+    {
+        try
+        {
+            if (!File.Exists(chatHistoryPath)) return;
+            var saved = JsonSerializer.Deserialize<List<ChatEntry>>(File.ReadAllText(chatHistoryPath));
+            if (saved is null) return;
+            chatHistory.Clear();
+            chatHistory.AddRange(saved.Where(entry => !string.IsNullOrWhiteSpace(entry.Author) && entry.Text is not null).TakeLast(MaxChatHistoryEntries));
+            foreach (var entry in chatHistory) RenderTextMessage(entry.Author, entry.Text);
+        }
+        catch
+        {
+            // A damaged history file must never prevent ALLINONE from starting.
+            chatHistory.Clear();
+        }
+    }
+
+    private void SaveChatHistory()
+    {
+        try
+        {
+            Directory.CreateDirectory(dataDir);
+            var temporaryPath = chatHistoryPath + ".tmp";
+            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(chatHistory, new JsonSerializerOptions { WriteIndented = true }));
+            File.Move(temporaryPath, chatHistoryPath, overwrite: true);
+        }
+        catch
+        {
+            // Chat still works if the history file cannot be written.
+        }
+    }
+
+    private const int MaxChatHistoryEntries = 200;
 
     private void ShowApp()
     {
@@ -460,6 +499,15 @@ public partial class MainWindow : Window
 
     private void AddMessage(string author, string text)
     {
+        RenderTextMessage(author, text);
+        chatHistory.Add(new ChatEntry(author, text));
+        if (chatHistory.Count > MaxChatHistoryEntries)
+            chatHistory.RemoveRange(0, chatHistory.Count - MaxChatHistoryEntries);
+        SaveChatHistory();
+    }
+
+    private void RenderTextMessage(string author, string text)
+    {
         var panel = new StackPanel();
         panel.Children.Add(new TextBlock { Text = author, FontWeight = FontWeights.SemiBold, Foreground = (Brush)FindResource("AccentBrush") });
         panel.Children.Add(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 7, 0, 0), FontSize = 15 });
@@ -540,6 +588,8 @@ public partial class MainWindow : Window
         return values.Count == 1 ? values.Pop() : throw new InvalidOperationException();
     }
 }
+
+public sealed record ChatEntry(string Author, string Text);
 
 public sealed class Settings
 {
