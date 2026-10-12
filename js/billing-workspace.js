@@ -141,7 +141,7 @@
   }
 
   async function init() {
-    if (!publishableKey || !publishableKey.startsWith('pk_') || publishableKey.indexOf('replace') !== -1) {
+    if (!publishableKey || !publishableKey.startsWith('pk_test_') || publishableKey.indexOf('replace') !== -1) {
       showWarning('Website sign-in is not configured yet. Add your website Clerk Publishable Key to js/clerk-config.js. It is public; never put a secret key in this file.');
       return;
     }
