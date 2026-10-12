@@ -669,3 +669,16 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   .composer input { min-height: 48px; }
   .send-btn { width: 46px; height: 46px; border-radius: 14px; }
 }
+
+.account-link {
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  min-height:40px; padding:0 14px; flex:0 0 auto;
+  border:1px solid #373840; border-radius:12px; color:#e8e8ec;
+  background:#202127; text-decoration:none; font-size:13px; font-weight:650;
+  transition:background .15s,border-color .15s,transform .1s;
+}
+.account-link span { color:#ff6974; font-size:15px; }
+.account-link:hover { background:rgba(224,30,43,.11); border-color:rgba(255,83,96,.65); }
+.account-link:active { transform:scale(.98); }
+.account-link:focus-visible { outline:none; box-shadow:var(--focus); }
+@media(max-width:420px) { .account-link { min-height:38px; padding:0 10px; font-size:12px; } }
