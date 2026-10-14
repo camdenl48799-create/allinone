@@ -174,8 +174,8 @@
     hideTyping();
   }
 
-  function showTyping() {
-    setPresenceWorking(true);
+  function showTyping(mode) {
+    setPresenceWorking(true, mode);
     if (!els.chat) return;
     hideTyping();
     var wrap = document.createElement('div');
@@ -194,9 +194,14 @@
     if (el && el.parentNode) el.parentNode.removeChild(el);
   }
 
-  function setPresenceWorking(working) {
-    if (els.assistantPresence) els.assistantPresence.classList.toggle('is-working', !!working);
-    if (els.presenceLabel) els.presenceLabel.textContent = working ? 'Taking shape…' : 'Ready to shape an idea';
+  function setPresenceWorking(working, mode) {
+    if (els.assistantPresence) {
+      els.assistantPresence.classList.toggle('is-working', !!working);
+      els.assistantPresence.classList.toggle('is-writing-code', !!working && mode === 'code');
+    }
+    if (els.presenceLabel) {
+      els.presenceLabel.textContent = !working ? 'Ready to shape an idea' : mode === 'code' ? 'Writing code…' : 'Taking shape…';
+    }
   }
 
   function setAssistantName(name) {
