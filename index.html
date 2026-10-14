@@ -13,8 +13,20 @@
 </head>
 <body>
 
-<div class="app">
+<div class="app-shell" id="appShell">
+  <aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
+    <div class="sidebar-brand"><span class="sidebar-mark" aria-hidden="true"></span><span>ALLINONE</span></div>
+    <button class="new-chat-btn" id="newChatBtn" type="button"><span aria-hidden="true">＋</span> New chat</button>
+    <div class="sidebar-section-label">WORKSPACE</div>
+    <div class="sidebar-note"><span class="sidebar-note-dot" aria-hidden="true"></span><span>Local workspace</span></div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer"><span class="footer-orb" aria-hidden="true"></span><div><strong>Red clay, endless forms</strong><small>Your ideas stay on this device.</small></div></div>
+  </aside>
+  <div class="app">
   <header class="topbar" role="banner">
+    <button class="icon-btn menu-btn" id="sidebarToggleBtn" type="button" aria-label="Toggle navigation" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+    </button>
     <div class="brand">
       <div class="logo" id="brandLogo" aria-hidden="true"></div>
       <div class="brand-text">
@@ -31,7 +43,13 @@
     </button>
   </header>
 
-  <main class="chat" id="chat" aria-live="polite" aria-label="Conversation"></main>
+  <section class="conversation">
+    <div class="assistant-presence" aria-hidden="true">
+      <div class="clay-orb" id="clayOrb"><span class="orb-highlight"></span><span class="writing-caret"></span></div>
+      <span class="presence-label" id="presenceLabel">Ready to shape an idea</span>
+    </div>
+    <main class="chat" id="chat" aria-live="polite" aria-label="Conversation"></main>
+  </section>
 
   <div class="chips" id="chips" role="group" aria-label="Quick suggestions"></div>
 
@@ -45,6 +63,7 @@
       </svg>
     </button>
   </form>
+</div>
 </div>
 
 <div class="overlay" id="setupOverlay" hidden>
