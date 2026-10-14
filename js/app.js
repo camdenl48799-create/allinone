@@ -104,6 +104,14 @@
     }
   }
 
+  function isCodeWritingRequest(text) {
+    var s = String(text || '').toLowerCase();
+    var asksToMake = /\b(write|generate|create|build|make|implement|fix|edit|refactor|debug)\b/.test(s);
+    var codeThing = /\b(code|script|function|program|website|web app|app|html|css|javascript|typescript|python|java|c\+\+|c#|luau|lua|sql|api|component|page|interface|ui|feature|bug)\b/.test(s);
+    var codeVerb = /\b(write|generate|create|build|make|implement|fix|edit|refactor)\s+(?:me\s+)?(?:some\s+|the\s+|a\s+|an\s+)?(?:code|script|function|program|website|web app|app|html|css|javascript|typescript|python|component|page|interface|ui|feature)\b/.test(s);
+    return (asksToMake && codeThing) || codeVerb || /\b(code this|code for|coding task|programming task|write a query)\b/.test(s);
+  }
+
   function sendMessage(rawText) {
     var text = String(rawText == null ? '' : rawText).trim();
     if (!text || busy) return;
@@ -123,7 +131,7 @@
     ui.clearMessageInput();
     busy = true;
 
-    ui.showTyping();
+    ui.showTyping(isCodeWritingRequest(text) ? 'code' : '');
 
     var delay = 320 + Math.min(900, text.length * 14);
 
