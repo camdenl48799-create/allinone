@@ -77,8 +77,8 @@ public partial class MainWindow : Window
 
         if (setupStep == 1) { SetupTitle.Text = "Welcome"; SetupDescription.Text = "A native Windows AI workspace with modular models, real search, local files, projects, and persistent settings."; }
         if (setupStep == 2) { SetupTitle.Text = "Make it yours"; SetupDescription.Text = "Choose the name ALLINONE should use for you."; NameBox.Text = settings.DisplayName; }
-        if (setupStep == 3) { SetupTitle.Text = "Safety & privacy"; SetupDescription.Text = "Safe Mode applies guardrails before requests are routed to tools or model providers."; SafeModeBox.IsChecked = settings.SafeMode; }
-        if (setupStep == 4) { SetupTitle.Text = "Ready"; SetupDescription.Text = "Only connected capabilities are exposed as available. Unimplemented roadmap models remain clearly unavailable."; SetupNext.Content = "Launch ALLINONE"; }
+        if (setupStep == 3) { SetupTitle.Text = "Safety & privacy"; SetupDescription.Text = "Safe Mode applies guardrails before requests are handled by local tools or ALLINONE’s own ONE model runtime."; SafeModeBox.IsChecked = settings.SafeMode; }
+        if (setupStep == 4) { SetupTitle.Text = "Ready"; SetupDescription.Text = "Only connected capabilities are exposed as available. The ONE model runtime must be installed before generative AI is available."; SetupNext.Content = "Launch ALLINONE"; }
     }
 
     private void SetupNext_Click(object sender, RoutedEventArgs e)
@@ -205,11 +205,11 @@ public partial class MainWindow : Window
 
         if (prompt.Contains("code", StringComparison.OrdinalIgnoreCase))
         {
-            AddMessage("CodeInOne", "CodeInOne routing is active, but no CodeInOne model runtime is installed in this build. The app will not fabricate a generated answer. Use @CodeInOne after connecting an approved model provider.");
+            AddMessage("CodeInOne", "CodeInOne routing is active, but the ONE model runtime is not installed in this build. No external AI API key is required. Install/connect ALLINONE’s own ONE runtime to enable code generation.");
             return;
         }
 
-        AddMessage("ALLINONE", "Local Core is active. This build does not have a connected generative model, so it will not pretend to generate AI answers. Real tools such as SearchInOne, local math, projects, and file analysis are available.");
+        AddMessage("ALLINONE", "Local Core is active, but ALLINONE’s own ONE model runtime is not connected in this build. No external AI API key is required. Local tools such as SearchInOne, math, projects, and file analysis remain available.");
         await Task.CompletedTask;
     }
 
@@ -307,7 +307,7 @@ public partial class MainWindow : Window
             AddMessage("@CodeInOne", "CodeInOne is selected, but no coding prompt was provided.");
             return;
         }
-        AddMessage("@CodeInOne", "CodeInOne is not connected to a generative model runtime in this build. I won't fabricate code generation. The project architecture is ready for a real provider to be connected.");
+        AddMessage("@CodeInOne", "CodeInOne cannot generate code until ALLINONE’s own ONE model runtime is installed and connected. You do not need an OpenAI, Anthropic, or other third-party AI API key.");
         await Task.CompletedTask;
     }
 
