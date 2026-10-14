@@ -560,3 +560,35 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   outline: none;
   box-shadow: var(--focus);
 }
+
+/* Red-clay workspace refresh */
+:root{--bg:#f7f5f2;--surface:#fffdfb;--surface-2:#eee9e5;--text:#28211f;--muted:#837671;--border:#e8dfda;--red:#c92e2e;--red-2:#ef554b;--red-dark:#8e1e20;--shadow:0 8px 28px rgba(68,39,31,.06)}
+@media(prefers-color-scheme:dark){:root{--bg:#171413;--surface:#211c1a;--surface-2:#302724;--text:#f5eeea;--muted:#b2a29b;--border:#3b302c;--shadow:0 8px 28px rgba(0,0,0,.2)}}
+.app-shell{display:flex;min-height:100vh;min-height:100dvh;background:var(--bg)}
+.sidebar{width:258px;flex:0 0 258px;display:flex;flex-direction:column;gap:18px;padding:22px 16px 16px;background:var(--surface);border-right:1px solid var(--border)}
+.sidebar-brand{display:flex;align-items:center;gap:10px;padding:2px 8px 18px;font-size:16px;font-weight:800;letter-spacing:-.03em}
+.sidebar-mark,.footer-orb{display:inline-block;flex:0 0 auto;width:27px;height:27px;border-radius:43% 57% 51% 49%/49% 43% 57% 51%;background:radial-gradient(circle at 32% 24%,#ff9b83 0%,#d84a3e 30%,#b42a2a 69%,#7e1b20 100%);box-shadow:inset -3px -4px 6px #5d111533,inset 2px 2px 4px #ffd2b355,0 3px 7px #a42b2826}
+.new-chat-btn{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:12px;padding:12px 13px;font-size:14px;font-weight:650;cursor:pointer;text-align:left}
+.new-chat-btn span{color:var(--red);font-size:20px;line-height:1}.new-chat-btn:hover{background:var(--surface-2);border-color:color-mix(in srgb,var(--red) 35%,var(--border))}
+.sidebar-section-label{padding:12px 8px 0;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.14em}
+.sidebar-note{display:flex;align-items:center;gap:9px;padding:9px 10px;color:var(--muted);font-size:13px}.sidebar-note-dot{width:7px;height:7px;border-radius:50%;background:#4c9b70;box-shadow:0 0 0 3px #4c9b701a}
+.sidebar-spacer{flex:1}.sidebar-footer{display:flex;align-items:center;gap:10px;padding:13px 9px;border-top:1px solid var(--border)}.sidebar-footer .footer-orb{width:31px;height:31px}.sidebar-footer strong,.sidebar-footer small{display:block}.sidebar-footer strong{font-size:12px;font-weight:700}.sidebar-footer small{margin-top:3px;color:var(--muted);font-size:11px}
+.app{flex:1 1 auto;width:0;max-width:none;min-width:0;height:100vh;height:100dvh}.topbar{background:var(--bg);border-bottom:1px solid transparent;padding:12px clamp(14px,3vw,32px)}.brand{gap:10px}.logo{width:34px;height:34px;filter:drop-shadow(0 3px 7px #a52b2930)}.brand-sub{text-transform:none;letter-spacing:0;font-size:11px}.menu-btn{display:none}
+.conversation{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;max-width:940px;width:100%;margin:0 auto;padding:0 clamp(14px,3vw,32px)}
+.assistant-presence{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 0 4px;flex:0 0 auto}
+.clay-orb{position:relative;width:44px;height:44px;border-radius:43% 57% 51% 49%/49% 43% 57% 51%;background:radial-gradient(circle at 31% 23%,#ffb09a 0%,#e15b4b 18%,#c43a32 48%,#a02528 78%,#70191f 100%);box-shadow:inset -5px -6px 9px #63131755,inset 3px 3px 6px #ffd0b855,0 8px 18px #a32a2827;transform:rotate(-8deg);transition:border-radius .65s cubic-bezier(.2,.8,.2,1),transform .65s cubic-bezier(.2,.8,.2,1),width .45s,height .45s;animation:clay-breathe 5s ease-in-out infinite}
+.clay-orb:after{content:"";position:absolute;left:22%;bottom:16%;width:45%;height:13%;border-radius:50%;background:#681a1c24;filter:blur(3px);transform:rotate(-18deg)}
+.orb-highlight{position:absolute;left:22%;top:15%;width:22%;height:12%;border-radius:50%;background:#ffe0c2a8;filter:blur(1px);transform:rotate(-34deg)}
+.presence-label{font-size:11px;letter-spacing:.015em;color:var(--muted);transition:opacity .2s}
+.assistant-presence.is-working .clay-orb{border-radius:31% 69% 38% 62%/59% 34% 66% 41%;transform:rotate(28deg) scale(1.1,.93);animation:clay-working 1.4s ease-in-out infinite alternate}
+.assistant-presence.is-working .orb-highlight{left:16%;top:20%;width:29%;height:10%}
+@keyframes clay-breathe{0%,100%{transform:translateY(0) rotate(-8deg) scale(1)}50%{transform:translateY(-2px) rotate(3deg) scale(1.035,.98)}}
+@keyframes clay-working{0%{border-radius:31% 69% 38% 62%/59% 34% 66% 41%;transform:rotate(10deg) scale(.96,1.08)}50%{border-radius:57% 43% 62% 38%/37% 59% 41% 63%;transform:rotate(88deg) scale(1.12,.91)}100%{border-radius:39% 61% 31% 69%/49% 37% 63% 51%;transform:rotate(155deg) scale(.92,1.1)}}
+.chat{padding:18px 0 12px;gap:18px}.msg{gap:12px;align-items:flex-start}.msg .avatar{width:28px;height:28px;margin-top:2px;margin-bottom:0}.msg .bubble{padding:5px 0;border-radius:0;max-width:min(84%,700px);font-size:15.5px;line-height:1.7}.msg.ai .bubble{border:0;background:transparent;box-shadow:none;border-radius:0}.msg.user .bubble{background:#f0e5df;color:#302321;border-radius:18px;border-bottom-right-radius:6px;padding:11px 15px}
+@media(prefers-color-scheme:dark){.msg.user .bubble{background:#392b27;color:#f8efea}}
+.msg.ai .bubble .time,.msg.user .bubble .time{opacity:.45}
+.composer{margin:0 auto 14px;width:calc(100% - clamp(28px,6vw,64px));max-width:850px;border:1px solid var(--border);border-radius:22px;background:var(--surface);padding:9px 10px 9px 15px;box-shadow:0 7px 24px #42221b0a}
+.composer input{border:0;background:transparent;box-shadow:none!important;padding:12px 3px}.composer input:focus{border:0}.send-btn{width:38px;height:38px;box-shadow:none}
+.chips{justify-content:center;flex-wrap:wrap;overflow:visible;padding:4px 18px 14px}.chip{background:transparent;border-radius:999px;padding:8px 12px}
+@media(max-width:760px){.sidebar{position:fixed;z-index:70;inset:0 auto 0 0;height:100dvh;transform:translateX(-102%);transition:transform .24s ease;box-shadow:none}.app-shell.sidebar-open .sidebar{transform:translateX(0);box-shadow:18px 0 50px #0002}.app-shell.sidebar-open:after{content:"";position:fixed;inset:0;z-index:60;background:#120d0b77}.menu-btn{display:inline-flex}.topbar{gap:8px}.brand{flex:1}.brand-text h1{max-width:48vw}.conversation{padding:0 14px}.assistant-presence{padding-top:16px}.clay-orb{width:38px;height:38px}.chat{padding-top:15px}.composer{width:calc(100% - 24px);margin-bottom:10px}.chips{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto}}
+@media(prefers-reduced-motion:reduce){.clay-orb,.assistant-presence.is-working .clay-orb{animation:none!important;transition:none!important}}
