@@ -19,6 +19,7 @@
     els.sendBtn = $('sendBtn');
     els.settingsBtn = $('settingsBtn');
     els.assistantPresence = document.querySelector('.assistant-presence');
+    els.clayOrb = $('clayOrb');
     els.presenceLabel = $('presenceLabel');
     els.sidebarToggleBtn = $('sidebarToggleBtn');
     els.appShell = $('appShell');
@@ -194,13 +195,35 @@
     if (el && el.parentNode) el.parentNode.removeChild(el);
   }
 
+  function modeIcon(mode) {
+    var icons = {
+      game: '<svg class="orb-mode-icon" viewBox="0 0 64 48" aria-hidden="true"><path d="M17 8h30c8 0 12 7 14 18l2 9c1 6-5 10-10 6L42 31H22L11 41c-5 4-11 0-10-6l2-9C5 15 9 8 17 8Z" fill="#c43a32" stroke="#8e1e20" stroke-width="2.5" stroke-linejoin="round"/><path d="M15 18v12M9 24h12" stroke="#ffe7dc" stroke-width="3.5" stroke-linecap="round"/><circle cx="47" cy="20" r="3" fill="#ffe7dc"/><circle cx="53" cy="26" r="3" fill="#ffe7dc"/><circle cx="43" cy="27" r="2" fill="#ffe7dc"/></svg>',
+      image: '<svg class="orb-mode-icon" viewBox="0 0 56 48" aria-hidden="true"><rect x="4" y="4" width="48" height="40" rx="5" fill="#fff2e8" stroke="#b52b2d" stroke-width="3"/><circle cx="38" cy="15" r="5" fill="#ef9b66"/><path d="M8 37 21 23l8 8 6-6 12 12Z" fill="#c43a32"/></svg>',
+      video: '<svg class="orb-mode-icon" viewBox="0 0 56 48" aria-hidden="true"><rect x="3" y="5" width="50" height="38" rx="6" fill="#c43a32" stroke="#8e1e20" stroke-width="2"/><path d="m23 15 15 9-15 9Z" fill="#fff0e7"/></svg>',
+      website: '<svg class="orb-mode-icon" viewBox="0 0 56 48" aria-hidden="true"><rect x="3" y="4" width="50" height="40" rx="5" fill="#fff2e8" stroke="#b52b2d" stroke-width="3"/><path d="M4 14h48" stroke="#b52b2d" stroke-width="3"/><circle cx="10" cy="9" r="1.5" fill="#c43a32"/><circle cx="16" cy="9" r="1.5" fill="#c43a32"/><path d="M12 22h19M12 28h29M12 34h22" stroke="#c43a32" stroke-width="2.5" stroke-linecap="round"/></svg>',
+      search: '<svg class="orb-mode-icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="#fff2e8" stroke="#c43a32" stroke-width="5"/><path d="m30 30 12 12" stroke="#c43a32" stroke-width="6" stroke-linecap="round"/></svg>',
+      think: '<svg class="orb-mode-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4a16 16 0 0 0-9 29v6h18v-6A16 16 0 0 0 24 4Z" fill="#ffe5a6" stroke="#b52b2d" stroke-width="3"/><path d="M17 44h14M18 39h12" stroke="#b52b2d" stroke-width="3" stroke-linecap="round"/><path d="M24 12v9m-4-5 4 5 4-5" stroke="#b52b2d" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    };
+    return icons[mode] || '';
+  }
+
   function setPresenceWorking(working, mode) {
+    var modes = ['is-writing-code', 'is-making-game', 'is-making-image', 'is-making-video', 'is-building-website', 'is-searching', 'is-thinking'];
+    var modeClasses = { code: 'is-writing-code', game: 'is-making-game', image: 'is-making-image', video: 'is-making-video', website: 'is-building-website', search: 'is-searching', think: 'is-thinking' };
     if (els.assistantPresence) {
       els.assistantPresence.classList.toggle('is-working', !!working);
-      els.assistantPresence.classList.toggle('is-writing-code', !!working && mode === 'code');
+      modes.forEach(function (name) { els.assistantPresence.classList.remove(name); });
+      if (working && modeClasses[mode]) els.assistantPresence.classList.add(modeClasses[mode]);
+    }
+    if (els.clayOrb && mode !== 'code') {
+      var highlight = '<span class="orb-highlight"></span><span class="writing-caret"></span>';
+      els.clayOrb.innerHTML = working && modeIcon(mode) ? modeIcon(mode) : highlight;
+    } else if (els.clayOrb && !working) {
+      els.clayOrb.innerHTML = '<span class="orb-highlight"></span><span class="writing-caret"></span>';
     }
     if (els.presenceLabel) {
-      els.presenceLabel.textContent = !working ? 'Ready to shape an idea' : mode === 'code' ? 'Writing code…' : 'Taking shape…';
+      var labels = { code: 'Writing code…', game: 'Making a game…', image: 'Creating an image…', video: 'Making a video…', website: 'Building a website…', search: 'Searching…', think: 'Thinking it through…' };
+      els.presenceLabel.textContent = !working ? 'Ready to shape an idea' : (labels[mode] || 'Taking shape…');
     }
   }
 
