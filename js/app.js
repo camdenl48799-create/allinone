@@ -104,12 +104,22 @@
     }
   }
 
-  function isCodeWritingRequest(text) {
+  function getCreationMode(text) {
     var s = String(text || '').toLowerCase();
-    var asksToMake = /\b(write|generate|create|build|make|implement|fix|edit|refactor|debug)\b/.test(s);
-    var codeThing = /\b(code|script|function|program|website|web app|app|html|css|javascript|typescript|python|java|c\+\+|c#|luau|lua|sql|api|component|page|interface|ui|feature|bug)\b/.test(s);
-    var codeVerb = /\b(write|generate|create|build|make|implement|fix|edit|refactor)\s+(?:me\s+)?(?:some\s+|the\s+|a\s+|an\s+)?(?:code|script|function|program|website|web app|app|html|css|javascript|typescript|python|component|page|interface|ui|feature)\b/.test(s);
-    return (asksToMake && codeThing) || codeVerb || /\b(code this|code for|coding task|programming task|write a query)\b/.test(s);
+    if (/\\b(game|video game|gameplay|level|platformer|rpg|game engine|unity|unreal)\\b/.test(s) &&
+        /\\b(make|create|build|develop|design|code|write|generate|implement)\\b/.test(s)) return 'game';
+    if (/\\b(image|picture|illustration|drawing|artwork|logo|poster)\\b/.test(s) &&
+        /\\b(make|create|generate|draw|design|render)\\b/.test(s)) return 'image';
+    if (/\\b(video|movie|animation|film|clip)\\b/.test(s) &&
+        /\\b(make|create|generate|edit|produce|build)\\b/.test(s)) return 'video';
+    if (/\\b(website|web page|webpage|web app|landing page)\\b/.test(s) &&
+        /\\b(make|create|build|design|code|write|generate|implement)\\b/.test(s)) return 'website';
+    if (/\\b(search|look up|find information|research)\\b/.test(s)) return 'search';
+    if (/\\b(explain|solve|figure out|analy[sz]e|think through|help me understand)\\b/.test(s)) return 'think';
+    var asksToMake = /\\b(write|generate|create|build|make|implement|fix|edit|refactor|debug)\\b/.test(s);
+    var codeThing = /\\b(code|script|function|program|html|css|javascript|typescript|python|java|c\\+\\+|c#|luau|lua|sql|api|component|feature|bug)\\b/.test(s);
+    var codeVerb = /\\b(write|generate|create|build|make|implement|fix|edit|refactor)\\s+(?:me\\s+)?(?:some\\s+|the\\s+|a\\s+|an\\s+)?(?:code|script|function|program|html|css|javascript|typescript|python|component|feature)\\b/.test(s);
+    return (asksToMake && codeThing) || codeVerb || /\\b(code this|code for|coding task|programming task|write a query)\\b/.test(s) ? 'code' : '';
   }
 
   function sendMessage(rawText) {
@@ -131,7 +141,7 @@
     ui.clearMessageInput();
     busy = true;
 
-    ui.showTyping(isCodeWritingRequest(text) ? 'code' : '');
+    ui.showTyping(getCreationMode(text));
 
     var delay = 320 + Math.min(900, text.length * 14);
 
