@@ -606,3 +606,17 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 @keyframes caret-write{0%,32%{left:8px;top:11px;opacity:1}36%{left:17px;top:16px;opacity:1}64%{left:25px;top:21px;opacity:1}68%,100%{opacity:0}}
 @media(max-width:760px){.assistant-presence.is-writing-code .clay-orb{width:32px;height:40px}.assistant-presence.is-writing-code .clay-orb:before{top:9px;height:21px}.assistant-presence.is-writing-code .writing-caret{top:9px}}
 @media(prefers-reduced-motion:reduce){.assistant-presence.is-writing-code .clay-orb,.assistant-presence.is-writing-code .clay-orb:before,.assistant-presence.is-writing-code .writing-caret{animation:none!important}.assistant-presence.is-writing-code .clay-orb:before{clip-path:none}}
+
+
+/* Creation-specific transformations of the red-clay assistant */
+.clay-orb .orb-mode-icon{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 4px 5px #6f1b1d20);animation:mode-icon-in .42s cubic-bezier(.2,.8,.2,1) both}
+.assistant-presence.is-making-game .clay-orb,.assistant-presence.is-making-image .clay-orb,.assistant-presence.is-making-video .clay-orb,.assistant-presence.is-building-website .clay-orb,.assistant-presence.is-searching .clay-orb,.assistant-presence.is-thinking .clay-orb{width:54px;height:48px;border-radius:0;background:transparent;box-shadow:none;transform:none;animation:none}
+.assistant-presence.is-making-game .clay-orb:after,.assistant-presence.is-making-image .clay-orb:after,.assistant-presence.is-making-video .clay-orb:after,.assistant-presence.is-building-website .clay-orb:after,.assistant-presence.is-searching .clay-orb:after,.assistant-presence.is-thinking .clay-orb:after{display:none}
+.assistant-presence.is-making-game .orb-highlight,.assistant-presence.is-making-image .orb-highlight,.assistant-presence.is-making-video .orb-highlight,.assistant-presence.is-building-website .orb-highlight,.assistant-presence.is-searching .orb-highlight,.assistant-presence.is-thinking .orb-highlight{display:none}
+.assistant-presence.is-making-game .clay-orb{width:60px;height:46px}
+.assistant-presence.is-making-image .clay-orb,.assistant-presence.is-making-video .clay-orb,.assistant-presence.is-building-website .clay-orb{width:56px;height:48px}
+.assistant-presence.is-searching .clay-orb,.assistant-presence.is-thinking .clay-orb{width:48px;height:48px}
+.assistant-presence.is-making-game .presence-label,.assistant-presence.is-making-image .presence-label,.assistant-presence.is-making-video .presence-label,.assistant-presence.is-building-website .presence-label,.assistant-presence.is-searching .presence-label,.assistant-presence.is-thinking .presence-label{color:var(--red)}
+@keyframes mode-icon-in{from{opacity:0;transform:scale(.55) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@media(max-width:760px){.assistant-presence.is-making-game .clay-orb{width:54px;height:42px}.assistant-presence.is-making-image .clay-orb,.assistant-presence.is-making-video .clay-orb,.assistant-presence.is-building-website .clay-orb{width:50px;height:44px}}
+@media(prefers-reduced-motion:reduce){.clay-orb .orb-mode-icon{animation:none!important}}
