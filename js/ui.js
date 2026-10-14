@@ -175,9 +175,9 @@
   }
 
   function showTyping(mode) {
+    hideTyping();
     setPresenceWorking(true, mode);
     if (!els.chat) return;
-    hideTyping();
     var wrap = document.createElement('div');
     wrap.className = 'msg ai typing';
     wrap.id = 'typingIndicator';
