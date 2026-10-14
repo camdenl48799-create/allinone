@@ -258,6 +258,27 @@
       sendMessage(ui.getMessageInput());
     });
 
+    if (ui.els.newChatBtn) {
+      ui.els.newChatBtn.addEventListener('click', function () {
+        clearChat();
+        if (ui.els.appShell) ui.els.appShell.classList.remove('sidebar-open');
+        if (ui.els.sidebarToggleBtn) ui.els.sidebarToggleBtn.setAttribute('aria-expanded', 'false');
+        ui.focusMessageInput();
+      });
+    }
+    if (ui.els.sidebarToggleBtn && ui.els.appShell) {
+      ui.els.sidebarToggleBtn.addEventListener('click', function () {
+        var open = ui.els.appShell.classList.toggle('sidebar-open');
+        ui.els.sidebarToggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      ui.els.appShell.addEventListener('click', function (e) {
+        if (e.target === ui.els.appShell && ui.els.appShell.classList.contains('sidebar-open')) {
+          ui.els.appShell.classList.remove('sidebar-open');
+          ui.els.sidebarToggleBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
     if (ui.els.settingsBtn) {
       ui.els.settingsBtn.addEventListener('click', function () {
         ui.openSettings(state);
