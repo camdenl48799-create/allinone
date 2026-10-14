@@ -18,6 +18,11 @@
     els.input = $('input');
     els.sendBtn = $('sendBtn');
     els.settingsBtn = $('settingsBtn');
+    els.assistantPresence = document.querySelector('.assistant-presence');
+    els.presenceLabel = $('presenceLabel');
+    els.sidebarToggleBtn = $('sidebarToggleBtn');
+    els.appShell = $('appShell');
+    els.newChatBtn = $('newChatBtn');
 
     els.setupOverlay = $('setupOverlay');
     els.setupLogo = $('setupLogo');
@@ -42,22 +47,15 @@
 
   function logoSVG(size) {
     var s = size || 40;
-    var uid = 'lg' + Math.random().toString(36).slice(2, 9);
-
+    var uid = 'clay' + Math.random().toString(36).slice(2, 9);
     return '' +
-      '<svg width="' + s + '" height="' + s + '" viewBox="0 0 64 64" ' +
-      'xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ALLINONE logo">' +
-        '<defs>' +
-          '<radialGradient id="' + uid + '" cx="35%" cy="27%" r="82%">' +
-            '<stop offset="0%" stop-color="#ff5b66"/>' +
-            '<stop offset="55%" stop-color="#e01e2b"/>' +
-            '<stop offset="100%" stop-color="#96060f"/>' +
-          '</radialGradient>' +
-        '</defs>' +
-        '<circle cx="32" cy="32" r="30" fill="url(#' + uid + ')"/>' +
-        '<circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>' +
-        '<circle cx="32" cy="32" r="16" fill="#ffffff"/>' +
-        '<circle cx="26.5" cy="26" r="4.5" fill="#ffe6e8" opacity="0.95"/>' +
+      '<svg width="' + s + '" height="' + s + '" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ALLINONE red clay orb">' +
+        '<defs><radialGradient id="' + uid + '" cx="31%" cy="23%" r="83%">' +
+          '<stop offset="0%" stop-color="#ffb09a"/><stop offset="22%" stop-color="#e15b4b"/><stop offset="58%" stop-color="#c43a32"/><stop offset="100%" stop-color="#70191f"/>' +
+        '</radialGradient></defs>' +
+        '<path d="M32 3 C45 2 59 12 60 27 C63 42 51 58 36 61 C21 64 6 53 4 38 C1 23 12 7 26 5 C28 4 30 3 32 3Z" fill="url(#' + uid + ')"/>' +
+        '<path d="M14 20 C19 11 29 8 36 10" fill="none" stroke="#ffd4b8" stroke-opacity=".62" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M15 43 C24 51 39 53 49 43" fill="none" stroke="#64191c" stroke-opacity=".24" stroke-width="2.5" stroke-linecap="round"/>' +
       '</svg>';
   }
 
@@ -177,6 +175,7 @@
   }
 
   function showTyping() {
+    setPresenceWorking(true);
     if (!els.chat) return;
     hideTyping();
     var wrap = document.createElement('div');
@@ -190,8 +189,14 @@
   }
 
   function hideTyping() {
+    setPresenceWorking(false);
     var el = $('typingIndicator');
     if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+
+  function setPresenceWorking(working) {
+    if (els.assistantPresence) els.assistantPresence.classList.toggle('is-working', !!working);
+    if (els.presenceLabel) els.presenceLabel.textContent = working ? 'Taking shape…' : 'Ready to shape an idea';
   }
 
   function setAssistantName(name) {
@@ -355,6 +360,7 @@
     clearMessageInput: clearMessageInput,
     focusMessageInput: focusMessageInput,
 
-    toast: toast
+    toast: toast,
+    setPresenceWorking: setPresenceWorking
   };
 })(window);
