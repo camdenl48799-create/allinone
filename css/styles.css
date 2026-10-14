@@ -592,3 +592,17 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .chips{justify-content:center;flex-wrap:wrap;overflow:visible;padding:4px 18px 14px}.chip{background:transparent;border-radius:999px;padding:8px 12px}
 @media(max-width:760px){.sidebar{position:fixed;z-index:70;inset:0 auto 0 0;height:100dvh;transform:translateX(-102%);transition:transform .24s ease;box-shadow:none}.app-shell.sidebar-open .sidebar{transform:translateX(0);box-shadow:18px 0 50px #0002}.app-shell.sidebar-open:after{content:"";position:fixed;inset:0;z-index:60;background:#120d0b77}.menu-btn{display:inline-flex}.topbar{gap:8px}.brand{flex:1}.brand-text h1{max-width:48vw}.conversation{padding:0 14px}.assistant-presence{padding-top:16px}.clay-orb{width:38px;height:38px}.chat{padding-top:15px}.composer{width:calc(100% - 24px);margin-bottom:10px}.chips{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto}}
 @media(prefers-reduced-motion:reduce){.clay-orb,.assistant-presence.is-working .clay-orb{animation:none!important;transition:none!important}}
+
+/* Code-writing state: the clay reshapes into a sheet of paper */
+.clay-orb:before{content:"";position:absolute;left:22%;right:22%;top:34%;height:3px;border-radius:2px;background:#ffd7c7;opacity:0;transform:scaleX(.2);transform-origin:left center}
+.assistant-presence.is-writing-code .clay-orb{width:37px;height:46px;border-radius:4px 7px 5px 3px;background:linear-gradient(135deg,#fffdf8 0%,#f3e8dc 100%);border:1px solid #d9c5b8;box-shadow:inset -3px -2px 5px #9e7b6c20,2px 5px 12px #49251e1f;transform:rotate(-4deg) scale(1);animation:paper-write-in .42s cubic-bezier(.2,.8,.2,1) both}
+.assistant-presence.is-writing-code .clay-orb:before{left:8px;right:6px;top:11px;height:24px;border-radius:0;background:repeating-linear-gradient(to bottom,transparent 0,transparent 5px,#c5aaa0 5px,#c5aaa0 6px);opacity:1;transform:scaleX(1);animation:ink-lines 1.35s ease-in-out infinite}
+.assistant-presence.is-writing-code .orb-highlight{left:8px;top:6px;width:5px;height:3px;border-radius:2px;background:#df7565;filter:none;transform:rotate(-4deg)}
+.assistant-presence.is-writing-code .writing-caret{position:absolute;left:8px;top:11px;width:2px;height:5px;background:#bd3b32;border-radius:1px;animation:caret-write 1.35s steps(1,end) infinite}
+.assistant-presence.is-writing-code .presence-label{color:var(--red)}
+.assistant-presence.is-writing-code .clay-orb:after{display:none}
+@keyframes paper-write-in{0%{width:44px;height:44px;border-radius:43% 57% 51% 49%/49% 43% 57% 51%;background:#c43a32;transform:rotate(-8deg) scale(.92)}60%{border-radius:3px 8px 4px 6px;transform:rotate(-7deg) scale(1.06)}100%{width:37px;height:46px;border-radius:4px 7px 5px 3px;transform:rotate(-4deg) scale(1)}}
+@keyframes ink-lines{0%,100%{clip-path:inset(0 100% 0 0)}35%{clip-path:inset(0 52% 0 0)}68%{clip-path:inset(0 15% 0 0)}}
+@keyframes caret-write{0%,32%{left:8px;top:11px;opacity:1}36%{left:17px;top:16px;opacity:1}64%{left:25px;top:21px;opacity:1}68%,100%{opacity:0}}
+@media(max-width:760px){.assistant-presence.is-writing-code .clay-orb{width:32px;height:40px}.assistant-presence.is-writing-code .clay-orb:before{top:9px;height:21px}.assistant-presence.is-writing-code .writing-caret{top:9px}}
+@media(prefers-reduced-motion:reduce){.assistant-presence.is-writing-code .clay-orb,.assistant-presence.is-writing-code .clay-orb:before,.assistant-presence.is-writing-code .writing-caret{animation:none!important}.assistant-presence.is-writing-code .clay-orb:before{clip-path:none}}
