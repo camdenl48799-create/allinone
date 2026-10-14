@@ -1,17 +1,16 @@
-// /api/chat — server-side proxy to the Anthropic API.
+// /api/chat — adapter for ALLINONE's own ONE model runtime.
 //
-// The frontend (index.html) never sees or holds an API key. It POSTs the
-// conversation to this endpoint, this function attaches the real secret
-// key (read from a Vercel environment variable) and calls Anthropic on
-// the server, then returns just the reply text to the browser.
+// This endpoint never calls OpenAI, Anthropic, or another hosted AI provider,
+// and it never requires an external AI API key. When a ONE inference service is
+// deployed, set ONE_MODEL_URL to its OpenAI-compatible /v1/chat/completions
+// endpoint. The model service itself must be owned/operated by ALLINONE.
 //
-// Setup on Vercel:
-//   Project Settings -> Environment Variables -> add ANTHROPIC_API_KEY
-//   (get a key from https://console.anthropic.com). Redeploy after adding it.
+// If the ONE runtime is not connected yet, return a clear message instead of
+// asking the user for a third-party API key or pretending the model is ready.
 
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-sonnet-5';
-const MAX_TOKENS = 1024;
+const MAX_MESSAGES = 20;
+const MAX_MESSAGE_CHARS = 8000;
+const MAX_SYSTEM_CHARS = 2000;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -19,11 +18,24 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({
-      error: 'The AI backend is not configured yet. Add ANTHROPIC_API_KEY in the Vercel project settings and redeploy.'
+  const modelUrl = process.env.ONE_MODEL_URL;
+  if (!modelUrl) {
+    res.status(503).json({
+      error: "The ONE model runtime is not connected yet. ALLINONE does not need an external AI API key; connect/deploy the ONE inference runtime to enable generative replies."
     });
+    return;
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(modelUrl);
+  } catch {
+    res.status(500).json({ error: 'ONE_MODEL_URL must be a valid HTTPS URL.' });
+    return;
+  }
+
+  if (parsedUrl.protocol !== 'https:' && parsedUrl.hostname !== 'localhost' && parsedUrl.hostname !== '127.0.0.1') {
+    res.status(500).json({ error: 'ONE_MODEL_URL must use HTTPS, except for local development.' });
     return;
   }
 
@@ -34,7 +46,6 @@ module.exports = async (req, res) => {
   body = body || {};
 
   const { messages, system } = body;
-
   if (!Array.isArray(messages) || messages.length === 0) {
     res.status(400).json({ error: 'Request must include a non-empty "messages" array.' });
     return;
@@ -42,44 +53,53 @@ module.exports = async (req, res) => {
 
   const cleanMessages = messages
     .filter(m => m && typeof m.content === 'string' && m.content.trim() && (m.role === 'user' || m.role === 'assistant'))
-    .map(m => ({ role: m.role, content: m.content.slice(0, 8000) }))
-    .slice(-20);
+    .map(m => ({ role: m.role, content: m.content.slice(0, MAX_MESSAGE_CHARS) }))
+    .slice(-MAX_MESSAGES);
 
   if (cleanMessages.length === 0) {
     res.status(400).json({ error: 'No valid messages to send.' });
     return;
   }
 
+  const outgoingMessages = cleanMessages.slice();
+  if (typeof system === 'string' && system.trim()) {
+    outgoingMessages.unshift({ role: 'system', content: system.slice(0, MAX_SYSTEM_CHARS) });
+  }
+
   try {
-    const upstream = await fetch(ANTHROPIC_URL, {
+    const upstream = await fetch(modelUrl, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: MODEL,
-        max_tokens: MAX_TOKENS,
-        system: typeof system === 'string' ? system.slice(0, 2000) : undefined,
-        messages: cleanMessages
+        model: 'ONE',
+        messages: outgoingMessages,
+        stream: false
       })
     });
 
     const data = await upstream.json().catch(() => null);
-
     if (!upstream.ok) {
-      const detail = data && data.error && data.error.message ? data.error.message : `Upstream error (${upstream.status}).`;
-      res.status(upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502).json({ error: detail });
+      res.status(502).json({
+        error: 'The ONE model runtime returned an error. Check the ONE runtime service logs.'
+      });
       return;
     }
 
-    const text = Array.isArray(data && data.content)
-      ? data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim()
-      : '';
+    const text = typeof data?.text === 'string'
+      ? data.text.trim()
+      : typeof data?.choices?.[0]?.message?.content === 'string'
+        ? data.choices[0].message.content.trim()
+        : '';
 
-    res.status(200).json({ text: text || "I didn't get a response back — try again." });
-  } catch (err) {
-    res.status(502).json({ error: 'Could not reach the AI provider. Please try again.' });
+    if (!text) {
+      res.status(502).json({ error: 'The ONE model runtime returned no reply text.' });
+      return;
+    }
+
+    res.status(200).json({ text });
+  } catch {
+    res.status(502).json({
+      error: 'Could not reach the ONE model runtime. No external AI API key is needed; check the runtime URL and service status.'
+    });
   }
 };
