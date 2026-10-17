@@ -34,11 +34,24 @@ public sealed class SearchInOne
         var encoded = Uri.EscapeDataString(query.Trim());
         using var request = new HttpRequestMessage(HttpMethod.Get, $"https://html.duckduckgo.com/html/?q={encoded}");
         request.Headers.UserAgent.ParseAdd("ALLINONE SearchInOne/1.0");
-        using var response = await Http.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            using var response = await Http.SendAsync(request, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+            var results = ParseResults(html);
+            if (results.Count > 0) return results;
+        }
+        catch (HttpRequestException) when (!cancellationToken.IsCancellationRequested) { }
 
-        var html = await response.Content.ReadAsStringAsync(cancellationToken);
-        return ParseResults(html);
+        // Fallback to Bing's public HTML search when DuckDuckGo is unavailable.
+        var fallback = new Uri($"https://www.bing.com/search?q={encoded}");
+        using var fallbackRequest = new HttpRequestMessage(HttpMethod.Get, fallback);
+        fallbackRequest.Headers.UserAgent.ParseAdd("ALLINONE SearchInOne/1.0");
+        using var fallbackResponse = await Http.SendAsync(fallbackRequest, cancellationToken);
+        fallbackResponse.EnsureSuccessStatusCode();
+        var fallbackHtml = await fallbackResponse.Content.ReadAsStringAsync(cancellationToken);
+        return ParseBingResults(fallbackHtml);
     }
 
     private static IReadOnlyList<SearchResult> ParseResults(string html)
@@ -75,6 +88,26 @@ public sealed class SearchInOne
             results.Add(new SearchResult(title, url));
             if (results.Count >= 8)
                 break;
+        }
+
+        return results;
+    }
+
+    private static IReadOnlyList<SearchResult> ParseBingResults(string html)
+    {
+        var results = new List<SearchResult>();
+        var matches = Regex.Matches(
+            html,
+            @"<li[^>]*class=""b_algo""[^>]*>[\s\S]*?<h2><a[^>]*href=""(?<url>[^""]+)""[^>]*>(?<title>[\s\S]*?)</a>",
+            RegexOptions.IgnoreCase);
+
+        foreach (Match match in matches)
+        {
+            var title = CleanHtml(match.Groups["title"].Value);
+            var url = WebUtility.HtmlDecode(match.Groups["url"].Value);
+            if (string.IsNullOrWhiteSpace(title) || !Uri.TryCreate(url, UriKind.Absolute, out _)) continue;
+            results.Add(new SearchResult(title, url));
+            if (results.Count >= 8) break;
         }
 
         return results;
