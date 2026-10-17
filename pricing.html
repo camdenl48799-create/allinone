@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e01e2b">
+  <meta name="description" content="Explore ALLINONE subscription plans: Pro, Pro+, Max, and Max+.">
+  <title>ALLINONE Plans</title>
+  <style>
+    :root{color-scheme:light dark;--red:#e01e2b;--bg:#f4f5f7;--surface:#fff;--text:#14171c;--muted:#68707d;--border:#e3e6eb}
+    @media(prefers-color-scheme:dark){:root{--bg:#0f1115;--surface:#181b21;--text:#eef1f5;--muted:#99a2b0;--border:#272c35}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:inherit}.wrap{max-width:1100px;margin:auto;padding:24px 18px 56px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:44px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;text-decoration:none}.logo{width:34px;height:34px;border-radius:50%;background:var(--red);display:grid;place-items:center;color:#fff;font-weight:900}.back{color:var(--muted);text-decoration:none;font-size:14px}
+    .eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:12px;font-weight:800;color:var(--red);text-align:center}
+    h1{text-align:center;font-size:clamp(34px,6vw,56px);line-height:1.05;letter-spacing:-.04em;margin:12px 0}
+    .intro{max-width:650px;margin:0 auto 22px;text-align:center;color:var(--muted);font-size:17px}
+    .test-note{max-width:760px;margin:0 auto 30px;padding:13px 16px;border:1px solid #e6b84d;border-radius:14px;background:color-mix(in srgb,#e6b84d 12%,var(--surface));font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch}.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px;display:flex;flex-direction:column;min-width:0;box-shadow:0 12px 34px #00000008}
+    .card.featured{border:2px solid var(--red);padding:21px}.tag{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:var(--red);min-height:18px}
+    h2{font-size:21px;margin:8px 0 2px}.price{font-size:36px;letter-spacing:-.04em;font-weight:850;margin:10px 0 2px}.price small{font-size:14px;font-weight:500;letter-spacing:0;color:var(--muted)}
+    .summary{color:var(--muted);font-size:14px;min-height:64px}.features{padding:0;margin:18px 0 24px;list-style:none;display:grid;gap:11px;font-size:14px}.features li{display:flex;gap:8px}.features li:before{content:"✓";color:var(--red);font-weight:900}
+    .cta{display:block;text-align:center;text-decoration:none;background:var(--red);color:white;font-weight:800;padding:12px 14px;border-radius:12px;margin-top:auto}.cta:hover{filter:brightness(1.08)}.footnote{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}
+    .bottom{margin:30px auto 0;max-width:760px;text-align:center;color:var(--muted);font-size:13px}
+    @media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.wrap{padding:18px 13px 38px}.top{margin-bottom:34px}.grid{grid-template-columns:1fr}.summary{min-height:0}.card,.card.featured{padding:20px}.price{font-size:34px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="top" aria-label="Main navigation">
+      <a class="brand" href="index.html"><span class="logo" aria-hidden="true">A</span><span>ALLINONE</span></a>
+      <a class="back" href="index.html">← Back to assistant</a>
+    </nav>
+    <p class="eyebrow">One AI. Every project.</p>
+    <h1>Choose your ALLINONE plan.</h1>
+    <p class="intro">Start with the essentials or choose a higher tier for more conversation time, more advanced Picture AI, and additional premium capabilities.</p>
+    <div class="test-note" role="note"><strong>Testing mode:</strong> These checkout buttons use Stripe test links. They do not collect real payments, and a test checkout does not activate premium features or a real subscription.</div>
+    <section class="grid" aria-label="Subscription plans">
+      <article class="card">
+        <p class="tag">Essential upgrade</p><h2>Pro</h2>
+        <p class="price">$5 <small>/ month</small></p>
+        <p class="summary">A more capable everyday ALLINONE experience.</p>
+        <ul class="features">
+          <li>Core ALLINONE experience</li><li>Improved Picture AI</li><li>Affordable entry to paid features</li>
+        </ul>
+        <a class="cta" href="https://buy.stripe.com/test_fZu6oJbng8614NDdqf7g400">Test Pro checkout</a>
+        <p class="footnote">Test checkout only</p>
+      </article>
+      <article class="card">
+        <p class="tag">Enhanced experience</p><h2>Pro+</h2>
+        <p class="price">$15 <small>/ month</small></p>
+        <p class="summary">More room to use ALLINONE's upgraded capabilities.</p>
+        <ul class="features">
+          <li>Everything in Pro</li><li>Further-improved Picture AI</li><li>Additional usage and capabilities as defined at launch</li>
+        </ul>
+        <a class="cta" href="https://buy.stripe.com/test_5kQeVf9f89a593Tbi77g401">Test Pro+ checkout</a>
+        <p class="footnote">Test checkout only</p>
+      </article>
+      <article class="card featured">
+        <p class="tag">Advanced AI</p><h2>Max</h2>
+        <p class="price">$20 <small>/ month</small></p>
+        <p class="summary">For people who want more talk time and advanced Picture AI.</p>
+        <ul class="features">
+          <li>Everything in Pro+</li><li>More talk time</li><li>Advanced Picture AI</li><li>May be invited to early access for select unreleased models; invitations are required</li>
+        </ul>
+        <a class="cta" href="https://buy.stripe.com/test_5kQbJ3crk71X7ZPfyn7g402">Test Max checkout</a>
+        <p class="footnote">Test checkout only</p>
+      </article>
+      <article class="card">
+        <p class="tag">Ultimate experience</p><h2>Max+</h2>
+        <p class="price">$25 <small>/ month</small></p>
+        <p class="summary">The top tier, with Max features enhanced and more premium benefits.</p>
+        <ul class="features">
+          <li>Everything in Max</li><li>Most advanced Picture AI tier</li><li>Highest planned talk-time tier</li><li>Additional premium features as they are finalized</li><li>Invite-only early access may be offered for select unreleased models</li>
+        </ul>
+        <a class="cta" href="https://buy.stripe.com/test_9B600lgHA5XT6VL5XN7g403">Test Max+ checkout</a>
+        <p class="footnote">Test checkout only</p>
+      </article>
+    </section>
+    <p class="bottom">Feature limits and premium access rules must be implemented before public launch. Early access to unreleased models is invitation-only and is never guaranteed by a subscription.</p>
+  </main>
+</body>
+</html>
