@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e01e2b">
+  <meta name="description" content="Manage your ALLINONE account and test subscription plans.">
+  <title>ALLINONE · Account & Billing</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { min-height:100vh; overflow:auto; }
+    .billing-shell { width:min(920px,100%); margin:0 auto; padding:24px 18px 48px; }
+    .billing-head { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
+    .billing-brand { display:flex; align-items:center; gap:12px; font-weight:800; }
+    .billing-logo { width:38px; height:38px; border-radius:50%; background:#e01e2b; display:grid; place-items:center; color:white; font-size:20px; }
+    .billing-panel { background:var(--panel, #fff); border:1px solid var(--border, #ddd); border-radius:18px; padding:22px; margin:18px 0; }
+    .billing-muted { color:var(--muted, #666); line-height:1.5; }
+    .billing-plans { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:18px; }
+    .billing-plan { border:1px solid var(--border, #ddd); border-radius:16px; padding:20px; display:flex; flex-direction:column; gap:12px; }
+    .billing-price { font-size:30px; font-weight:800; }
+    .billing-action { border:0; border-radius:10px; padding:12px 16px; font:inherit; font-weight:700; cursor:pointer; background:#e01e2b; color:white; }
+    .billing-action.secondary { background:transparent; color:inherit; border:1px solid var(--border, #ddd); }
+    .billing-action:disabled { opacity:.55; cursor:wait; }
+    .billing-message { border-radius:10px; padding:12px 14px; margin-top:14px; background:var(--subtle, #f3f3f3); line-height:1.45; overflow-wrap:anywhere; }
+    .billing-message[hidden], [hidden] { display:none !important; }
+    #allinone-sign-in { min-height:240px; }
+    #allinone-user-button { min-width:40px; }
+    .billing-status { font-weight:700; }
+    @media(max-width:520px) { .billing-shell { padding:16px 12px 32px; } .billing-panel { padding:16px; } .billing-head { align-items:flex-start; } }
+  </style>
+</head>
+<body>
+  <main class="billing-shell">
+    <header class="billing-head">
+      <div class="billing-brand"><div class="billing-logo" aria-hidden="true">A</div><div>ALLINONE<br><small class="billing-muted">Account & billing</small></div></div>
+      <div id="allinone-user-button" aria-label="Account menu"></div>
+    </header>
+
+    <section class="billing-panel">
+      <h1>Welcome to ALLINONE</h1>
+      <p class="billing-muted">Sign in to manage your account and try the Pro subscription checkout in test mode. This page does not process real payments.</p>
+      <div id="allinone-setup-warning" class="billing-message" role="status" hidden></div>
+      <div id="allinone-sign-in"></div>
+    </section>
+
+    <section id="allinone-workspace" class="billing-panel" hidden>
+      <h2>Your workspace</h2>
+      <p id="allinone-greeting" class="billing-muted">You’re signed in.</p>
+      <p>Subscription: <span id="allinone-plan-status" class="billing-status">Checking…</span></p>
+      <div class="billing-plans">
+        <article class="billing-plan">
+          <h3>ALLINONE Pro</h3>
+          <div class="billing-price">$5 <small>/ month</small></div>
+          <p class="billing-muted">For your next step with ALLINONE.</p>
+          <button class="billing-action" type="button" data-plan="pro">Try Pro checkout</button>
+        </article>
+        <article class="billing-plan">
+          <h3>ALLINONE Pro+</h3>
+          <div class="billing-price">$15 <small>/ month</small></div>
+          <p class="billing-muted">The higher-tier ALLINONE plan.</p>
+          <button class="billing-action" type="button" data-plan="pro_plus">Try Pro+ checkout</button>
+        </article>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:18px">
+        <button id="allinone-refresh-status" class="billing-action secondary" type="button">Refresh subscription status</button>
+        <button id="allinone-manage-billing" class="billing-action secondary" type="button">Manage billing</button>
+        <button id="allinone-sign-out" class="billing-action secondary" type="button">Sign out</button>
+      </div>
+      <div id="allinone-billing-message" class="billing-message" role="status" hidden></div>
+    </section>
+
+    <p class="billing-muted">Test workspace only. Don’t enter real card details for testing. Your paid access must be enforced by the server before launch.</p>
+  </main>
+
+  <script src="js/clerk-config.js"></script>
+  <script src="js/billing-workspace.js"></script>
+</body>
+</html>
