@@ -531,3 +531,419 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   ALLINONE — premium red interface
+   Environmental lighting is scoped to the setup overlay only.
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  --red: #e01e2b;
+  --red-2: #ff7882;
+  --red-dark: #b81823;
+
+  --bg: #0b0c0e;
+  --surface: #121416;
+  --surface-2: #1b1e22;
+  --text: #f2f3f5;
+  --muted: #a8aeb8;
+  --border: #343940;
+
+  --shadow: none;
+  --shadow-modal: 0 24px 80px rgba(0, 0, 0, 0.5);
+  --focus: 0 0 0 3px rgba(255, 120, 130, 0.4);
+
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+body {
+  background: var(--bg);
+}
+
+::selection {
+  background: #8f1721;
+  color: #fff;
+}
+
+button,
+input,
+select,
+textarea {
+  accent-color: var(--red);
+}
+
+:where(button, input, select, textarea, a, [tabindex]):focus-visible {
+  outline: 2px solid #ff8d96;
+  outline-offset: 4px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ba3af;
+  opacity: 1;
+}
+
+/* Everyday workspace: structured, quiet, and free of glow. */
+
+.app {
+  width: 100%;
+  max-width: 1120px;
+  min-width: 0;
+  background: var(--bg);
+}
+
+.topbar {
+  min-height: 78px;
+  padding-inline: clamp(16px, 3vw, 32px);
+  background: var(--bg);
+}
+
+.logo {
+  filter: none;
+}
+
+.brand-text h1 {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.brand-sub {
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.icon-btn,
+.btn,
+.send-btn {
+  min-height: 44px;
+  border-radius: 7px;
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+}
+
+.btn {
+  padding: 11px 18px;
+}
+
+.btn.primary,
+.send-btn,
+.suggestion.selected {
+  background: var(--red);
+  color: #fff;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.btn.primary:hover,
+.send-btn:hover {
+  background: #c81926;
+  filter: none;
+}
+
+.btn:hover,
+.chip:hover,
+.suggestion:hover {
+  color: var(--text);
+  border-color: #ff7882;
+}
+
+.btn.danger,
+.error {
+  color: #ff8d96;
+}
+
+.btn.danger:hover {
+  color: #ffabb1;
+}
+
+.chat {
+  min-height: 0;
+  padding: clamp(20px, 3vw, 36px);
+  gap: 20px;
+}
+
+.msg {
+  gap: 12px;
+  animation-duration: 220ms;
+}
+
+.msg .bubble {
+  max-width: min(84%, 720px);
+  border-radius: 9px;
+  padding: 14px 17px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.msg.ai .bubble {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.msg.user .bubble {
+  background: #24282e;
+  color: var(--text);
+  border: 1px solid #454c57;
+}
+
+.msg.system .bubble {
+  background: #181215;
+  border: 1px solid #583039;
+}
+
+.msg .time {
+  opacity: 1;
+  color: var(--muted);
+}
+
+.msg.user .time {
+  color: #bcc3cc;
+}
+
+.chips {
+  gap: 8px;
+  padding: 8px clamp(16px, 3vw, 32px) 16px;
+  scroll-padding-inline: 16px;
+}
+
+.chip,
+.suggestion {
+  min-height: 44px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.composer {
+  gap: 12px;
+  padding: 16px clamp(16px, 3vw, 32px)
+    calc(16px + env(safe-area-inset-bottom));
+  background: var(--bg);
+}
+
+.composer input,
+.field input[type="text"],
+.field select {
+  min-height: 48px;
+  border-radius: 7px;
+  border-color: #505762;
+  background: #0d0f12;
+}
+
+.composer input {
+  padding-inline: 16px;
+}
+
+.send-btn {
+  width: 48px;
+  height: 48px;
+}
+
+.modal {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px;
+}
+
+.modal h2 {
+  letter-spacing: -0.035em;
+}
+
+.overlay {
+  background: rgba(0, 0, 0, 0.72);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.modal-actions {
+  flex-wrap: wrap;
+}
+
+.modal-actions .btn {
+  flex-basis: 150px;
+}
+
+.toast {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #20242a;
+}
+
+/* First-run only: one overhead light source and a quiet logo halo. */
+
+#setupOverlay {
+  isolation: isolate;
+  padding:
+    calc(28px + env(safe-area-inset-top))
+    20px
+    calc(28px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(
+      ellipse 75% 60% at 50% -12%,
+      rgba(224, 30, 43, 0.2),
+      transparent 75%
+    ),
+    #090a0c;
+}
+
+#setupOverlay .modal.setup {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  padding: clamp(24px, 5vw, 44px);
+  border: 1px solid #38272b;
+  border-top-color: #704047;
+  border-radius: 10px;
+  background: #111214;
+  box-shadow:
+    0 -20px 90px rgba(224, 30, 43, 0.055),
+    0 30px 80px rgba(0, 0, 0, 0.45);
+  animation: setup-arrive 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+#setupLogo {
+  position: relative;
+  isolation: isolate;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 28px;
+  filter: drop-shadow(0 5px 14px rgba(224, 30, 43, 0.2));
+}
+
+#setupLogo::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -32px;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(224, 30, 43, 0.16),
+    transparent 67%
+  );
+}
+
+#setupTitle {
+  margin-bottom: 12px;
+  font-size: clamp(27px, 5vw, 34px);
+  font-weight: 650;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+#setupOverlay .muted {
+  margin-bottom: 26px;
+  line-height: 1.7;
+}
+
+#nameSuggestions {
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+#setupOverlay .field > span {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+}
+
+#setupStartBtn {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+}
+
+#setupOverlay .fineprint {
+  margin-top: 18px;
+  font-size: 12px;
+}
+
+@keyframes setup-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 1120px) {
+  .app {
+    border-inline: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    min-height: 72px;
+  }
+
+  .chat {
+    padding: 20px 14px;
+    gap: 16px;
+  }
+
+  .msg .bubble {
+    max-width: 88%;
+    padding: 12px 14px;
+  }
+
+  .msg .avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .modal {
+    padding: 22px;
+  }
+
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .row input {
+    flex-basis: 160px;
+  }
+}
+
+@media (max-height: 650px) {
+  #setupOverlay {
+    padding-block: 16px;
+  }
+
+  #setupLogo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :where(button, input, select, textarea, a, [tabindex]):focus-visible {
+    outline: 2px solid Highlight;
+  }
+
+  .suggestion.selected {
+    border: 2px solid Highlight;
+  }
+}
