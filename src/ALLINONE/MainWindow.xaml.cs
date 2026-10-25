@@ -23,7 +23,6 @@ public partial class MainWindow : Window
     private readonly HttpClient web = new() { Timeout = TimeSpan.FromSeconds(15) };
     private Settings settings = new();
     private int setupStep = 1;
-    private bool gameMode;
     private ProjectInfo? currentProject;
 
     public MainWindow()
@@ -118,6 +117,37 @@ public partial class MainWindow : Window
         AccountPage.Visibility = tag == "Account" ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private async void WebSearch_Click(object sender, RoutedEventArgs e)
+    {
+        var query = PromptBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            AddMessage("SearchInOne", "Enter something to search for first.");
+            return;
+        }
+
+        PromptBox.Clear();
+        SetBusy(true);
+        try
+        {
+            if (settings.SafeMode && SafeModePolicy.IsBlocked(query))
+            {
+                AddMessage("ALLINONE Safety", "Safe Mode blocked this search before any internet request was made.");
+                return;
+            }
+
+            await RunSearchAsync(query);
+        }
+        catch (Exception ex)
+        {
+            AddMessage("SearchInOne", $"Live web search failed: {ex.Message}");
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
     private void PromptBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         var text = PromptBox.Text;
@@ -163,6 +193,12 @@ public partial class MainWindow : Window
 
         try
         {
+            if (settings.SafeMode && SafeModePolicy.IsBlocked(raw))
+            {
+                AddMessage("ALLINONE Safety", "Safe Mode blocked this request before any tool, website, file, search, or model route was started.");
+                return;
+            }
+
             var (target, text) = MentionRouter.Parse(raw);
             switch (target)
             {
@@ -185,12 +221,6 @@ public partial class MainWindow : Window
 
     private async Task RunLocalCoreAsync(string prompt)
     {
-        if (settings.SafeMode && ContainsUnsafeRequest(prompt))
-        {
-            AddMessage("ALLINONE Safety", "Safe Mode blocked this request. Try a safe, age-appropriate version of the task.");
-            return;
-        }
-
         var expression = ExtractMath(prompt);
         if (expression is not null)
         {
@@ -360,6 +390,31 @@ public partial class MainWindow : Window
         }
     }
 
+    private void CreateFile_Click(object sender, RoutedEventArgs e)
+    {
+        if (currentProject is null)
+        {
+            AddMessage("Files", "Create/select a project before creating a file so it stays isolated to that workspace.");
+            return;
+        }
+
+        var dialog = new FileCreateDialog();
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var path = projects.CreateFile(currentProject, dialog.FileName, dialog.Content);
+            currentProject = projects.List().FirstOrDefault(p => p.Id == currentProject.Id);
+            FileStatus.Text = $"Created {Path.GetFileName(path)}";
+            LoadFiles();
+            LoadProjects();
+        }
+        catch (Exception ex)
+        {
+            AddMessage("Files", $"File creation failed: {ex.Message}");
+        }
+    }
+
     private void AddFile_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog { Multiselect = false, Filter = "Supported text/code|*.txt;*.md;*.json;*.csv;*.xml;*.html;*.htm;*.css;*.js;*.ts;*.tsx;*.jsx;*.cs;*.cpp;*.h;*.hpp;*.py;*.java;*.go;*.rs;*.swift;*.kt;*.xaml;*.yml;*.yaml;*.sql;*.log|All files|*.*" };
@@ -460,9 +515,41 @@ public partial class MainWindow : Window
 
     private void AddMessage(string author, string text)
     {
-        var panel = new StackPanel();
-        panel.Children.Add(new TextBlock { Text = author, FontWeight = FontWeights.SemiBold, Foreground = (Brush)FindResource("AccentBrush") });
-        panel.Children.Add(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 7, 0, 0), FontSize = 15 });
+        var panel = new Grid { Margin = new Thickness(0, 7, 0, 0) };
+        panel.ColumnDefinitions.Add(new ColumnDefinition());
+        panel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var body = new TextBlock
+        {
+            Text = text,
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 15,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        Grid.SetColumn(body, 0);
+        panel.Children.Add(body);
+
+        var copy = new Button
+        {
+            Content = "Copy",
+            Padding = new Thickness(10, 6, 10, 6),
+            Margin = new Thickness(12, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Top,
+            ToolTip = "Copy this response to the clipboard"
+        };
+        copy.Click += (_, _) =>
+        {
+            try
+            {
+                Clipboard.SetText(text);
+                copy.Content = "Copied ✓";
+                _ = Task.Delay(1200).ContinueWith(_ => Dispatcher.Invoke(() => copy.Content = "Copy"));
+            }
+            catch { }
+        };
+        Grid.SetColumn(copy, 1);
+        panel.Children.Add(copy);
+
         AddPanelMessage(author, panel);
     }
 
@@ -487,11 +574,6 @@ public partial class MainWindow : Window
     {
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
     }
-
-    private static bool ContainsUnsafeRequest(string prompt) =>
-        prompt.Contains("how to hurt", StringComparison.OrdinalIgnoreCase)
-        || prompt.Contains("self harm", StringComparison.OrdinalIgnoreCase)
-        || prompt.Contains("suicide", StringComparison.OrdinalIgnoreCase);
 
     private static string? ExtractMath(string prompt)
     {
@@ -550,6 +632,62 @@ public sealed class Settings
     public bool SignedIn { get; set; }
     public string? AccountName { get; set; }
     public string SelectedModel { get; set; } = "local-core";
+}
+
+public sealed class FileCreateDialog : Window
+{
+    public string FileName => nameBox.Text.Trim();
+    public string Content => contentBox.Text;
+
+    private readonly TextBox nameBox = new();
+    private readonly TextBox contentBox = new();
+
+    public FileCreateDialog()
+    {
+        Title = "Create ALLINONE file";
+        Width = 760;
+        Height = 620;
+        MinWidth = 560;
+        MinHeight = 420;
+        WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
+
+        var panel = new Grid { Margin = new Thickness(22) };
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        panel.RowDefinitions.Add(new RowDefinition());
+        panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        panel.Children.Add(new TextBlock { Text = "Filename", FontWeight = FontWeights.SemiBold });
+        nameBox.Text = "new-file.txt";
+        Grid.SetRow(nameBox, 1);
+        panel.Children.Add(nameBox);
+
+        contentBox.AcceptsReturn = true;
+        contentBox.TextWrapping = TextWrapping.Wrap;
+        contentBox.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+        contentBox.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto;
+        contentBox.Margin = new Thickness(0, 12, 0, 12);
+        contentBox.MinHeight = 280;
+        Grid.SetRow(contentBox, 2);
+        panel.Children.Add(contentBox);
+
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        var cancel = new Button { Content = "Cancel", Width = 90, Margin = new Thickness(0,0,8,0) };
+        cancel.Click += (_, _) => { DialogResult = false; Close(); };
+        var create = new Button { Content = "Create file", Width = 110, Background = new SolidColorBrush(Color.FromRgb(224,30,43)) };
+        create.Click += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(FileName)) return;
+            DialogResult = true;
+            Close();
+        };
+        buttons.Children.Add(cancel);
+        buttons.Children.Add(create);
+        Grid.SetRow(buttons, 3);
+        panel.Children.Add(buttons);
+        Content = panel;
+    }
 }
 
 public sealed class InputDialog : Window
