@@ -14,7 +14,11 @@
     personality: config.DEFAULT_PERSONALITY,
     safeMode: true,
     setupComplete: false,
-    history: []
+    history: [],
+    engine: {
+      mode: (config.ENGINE && config.ENGINE.defaultMode) || 'offline-lite',
+      modelId: null
+    }
   };
 
   var busy = false;
@@ -27,29 +31,34 @@
   }
 
   function loadState() {
+    // Prefer the current key; fall back to the previous v1 key so users keep their data.
     var saved = storage.load(config.STORAGE_KEY, null);
-    if (!saved || typeof saved !== 'object') return;
+    if (!saved) {
+      saved = storage.load('allinone.state.v1', null);
+    }
 
-    if (typeof saved.assistantName === 'string') {
-      var nameCheck = safety.checkName(saved.assistantName);
+    var migrated = storage.migrateState(saved);
+
+    if (typeof migrated.assistantName === 'string') {
+      var nameCheck = safety.checkName(migrated.assistantName);
       if (nameCheck.ok) state.assistantName = nameCheck.value;
     }
 
-    if (typeof saved.userName === 'string') {
-      state.userName = saved.userName.replace(/\s+/g, ' ').trim().slice(0, 24);
+    if (typeof migrated.userName === 'string') {
+      state.userName = migrated.userName.replace(/\s+/g, ' ').trim().slice(0, 24);
     }
 
-    if (validPersonality(saved.personality)) {
-      state.personality = saved.personality;
+    if (validPersonality(migrated.personality)) {
+      state.personality = migrated.personality;
     }
 
-    if (saved.safeMode === false) state.safeMode = false;
-    if (saved.setupComplete === true) state.setupComplete = true;
+    state.safeMode = migrated.safeMode !== false;
+    state.setupComplete = migrated.setupComplete === true;
 
-    if (Object.prototype.toString.call(saved.history) === '[object Array]') {
+    if (Object.prototype.toString.call(migrated.history) === '[object Array]') {
       var cleaned = [];
-      for (var i = 0; i < saved.history.length; i++) {
-        var m = saved.history[i];
+      for (var i = 0; i < migrated.history.length; i++) {
+        var m = migrated.history[i];
         if (!m || typeof m.text !== 'string') continue;
         if (m.role !== 'user' && m.role !== 'ai') continue;
         cleaned.push({
@@ -61,17 +70,27 @@
       state.history = cleaned.slice(-config.MAX_HISTORY);
     }
 
+    if (migrated.engine && typeof migrated.engine === 'object') {
+      state.engine.mode = migrated.engine.mode === 'webgpu' ? 'webgpu' : 'offline-lite';
+      state.engine.modelId = typeof migrated.engine.modelId === 'string' ? migrated.engine.modelId : null;
+    }
+
     brain.setUserName(state.userName);
   }
 
   function saveState() {
     storage.save(config.STORAGE_KEY, {
+      version: config.STORAGE_VERSION || 2,
       assistantName: state.assistantName,
       userName: state.userName,
       personality: state.personality,
       safeMode: state.safeMode,
       setupComplete: state.setupComplete,
-      history: state.history.slice(-config.MAX_HISTORY)
+      history: state.history.slice(-config.MAX_HISTORY),
+      engine: {
+        mode: state.engine.mode,
+        modelId: state.engine.modelId
+      }
     });
   }
 
