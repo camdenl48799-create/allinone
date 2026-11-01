@@ -36,6 +36,63 @@
     else delete memoryStore[key];
   }
 
+  /**
+   * Migrate any older saved state to the current schema.
+   * Preserves userName, assistantName, personality, safeMode, history.
+   * Adds engine defaults when missing.
+   */
+  function migrateState(saved) {
+    if (!saved || typeof saved !== 'object') {
+      return {
+        version: config.STORAGE_VERSION || 2,
+        assistantName: (config && config.DEFAULT_ASSISTANT_NAME) || 'Nova',
+        userName: '',
+        personality: (config && config.DEFAULT_PERSONALITY) || 'friendly',
+        safeMode: true,
+        setupComplete: false,
+        history: [],
+        engine: {
+          mode: (config && config.ENGINE && config.ENGINE.defaultMode) || 'offline-lite',
+          modelId: null
+        }
+      };
+    }
+
+    var out = {
+      version: config.STORAGE_VERSION || 2,
+      assistantName: typeof saved.assistantName === 'string' ? saved.assistantName : ((config && config.DEFAULT_ASSISTANT_NAME) || 'Nova'),
+      userName: typeof saved.userName === 'string' ? saved.userName : '',
+      personality: typeof saved.personality === 'string' ? saved.personality : ((config && config.DEFAULT_PERSONALITY) || 'friendly'),
+      safeMode: saved.safeMode === false ? false : true,
+      setupComplete: saved.setupComplete === true,
+      history: Array.isArray(saved.history) ? saved.history.slice() : [],
+      engine: {
+        mode: 'offline-lite',
+        modelId: null
+      }
+    };
+
+    // Preserve any already-valid engine settings from a newer record
+    if (saved.engine && typeof saved.engine === 'object') {
+      if (saved.engine.mode === 'webgpu' || saved.engine.mode === 'offline-lite') {
+        out.engine.mode = saved.engine.mode;
+      }
+      if (typeof saved.engine.modelId === 'string' && saved.engine.modelId) {
+        // Only keep modelId if the catalog still considers it selectable
+        if (ALLINONE.engineCatalog && typeof ALLINONE.engineCatalog.isSelectable === 'function') {
+          if (ALLINONE.engineCatalog.isSelectable(saved.engine.modelId)) {
+            out.engine.modelId = saved.engine.modelId;
+          }
+        } else {
+          // Catalog not loaded yet — keep the string; later load will re-validate
+          out.engine.modelId = saved.engine.modelId;
+        }
+      }
+    }
+
+    return out;
+  }
+
   ALLINONE.storage = {
     available: available,
 
@@ -86,6 +143,8 @@
           memoryStore = {};
         }
       } catch (err) { /* ignore */ }
-    }
+    },
+
+    migrateState: migrateState
   };
-})(window);
+})(typeof window !== 'undefined' ? window : global);

@@ -1,9 +1,16 @@
 {
   "name": "allinone",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
-  "description": "ALLINONE — One AI. Every project.",
+  "description": "ALLINONE — One AI. Every project. Local-first AI assistant.",
   "scripts": {
+    "test": "node --test tests/",
     "note": "The native Windows app is built from src/ALLINONE/ALLINONE.csproj with GitHub Actions."
+  },
+  "dependencies": {
+    "@mlc-ai/web-llm": "0.2.87"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

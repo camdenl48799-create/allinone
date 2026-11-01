@@ -11,8 +11,18 @@
     MIN_NAME_LENGTH: 2,
     MAX_NAME_LENGTH: 18,
 
-    STORAGE_KEY: 'allinone.state.v1',
+    // Storage key. Migration helper in storage.js handles older v1 records.
+    STORAGE_KEY: 'allinone.state.v2',
+    STORAGE_VERSION: 2,
     MAX_HISTORY: 200,
+
+    // Local engine defaults (WebGPU / Offline Lite)
+    ENGINE: {
+      // 'offline-lite' | 'webgpu'
+      defaultMode: 'offline-lite',
+      // null means no model selected yet
+      defaultModelId: null
+    },
 
     SUGGESTED_NAMES: [
       'Nova', 'Ace', 'Pixel', 'Orion', 'Luna', 'Byte',
